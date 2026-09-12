@@ -1783,6 +1783,41 @@
           });
           observer.observe(document.body, { childList: true, subtree: true });
       })();
+      // ============================================================
+      // 5 POSTS PER DAY LIMIT (একদিনে সর্বোচ্চ ৫টি পোস্ট)
+      // ============================================================
+      const originalPublish = window.publishMedia;
+      window.publishMedia = async function() {
+          if (upType === 'post' && currentUser) {
+              const todayStr = new Date().toDateString();
+              let todaysPostCount = 0;
+              
+              allPosts.forEach(p => {
+                  if (p.uid === currentUser.uid && p.timestamp) {
+                      let postDateStr = "";
+                      if (p.timestamp.toMillis) {
+                          postDateStr = new Date(p.timestamp.toMillis()).toDateString();
+                      } else if (p.timestamp.seconds) {
+                          postDateStr = new Date(p.timestamp.seconds * 1000).toDateString();
+                      } else {
+                          postDateStr = new Date(p.timestamp).toDateString();
+                      }
+                      if (postDateStr === todayStr) {
+                          todaysPostCount++;
+                      }
+                  }
+              });
+
+              if (todaysPostCount >= 5) {
+                  showToast("⚠️ আপনি একদিনে সর্বোচ্চ ৫টি পোস্ট আপলোড করতে পারবেন!");
+                  document.getElementById('preview-modal').classList.add('hidden');
+                  document.getElementById("mediaFile").value = "";
+                  selFile = null;
+                  return;
+              }
+          }
+          await originalPublish.apply(this, arguments);
+      };
 
     </script>
 </body>
