@@ -1600,6 +1600,350 @@
             } else { l.innerHTML = '<p style="text-align:center; color:#8e8e8e;">No views yet.</p>'; }
             document.getElementById('story-viewers-modal').classList.remove('hidden');
         };
+      // ============================================================
+// ADMIN AUDIO UPLOAD SYSTEM (অ্যাডমিন প্যানেল থেকে অডিও আপলোড)
+// ============================================================
+
+// ১. অ্যাডমিন প্যানেলে অডিও আপলোড সেকশন তৈরি করা (ডাইনামিকভাবে)
+(function addAudioUploadToAdminPanel() {
+    // অপেক্ষা করুন যতক্ষণ না অ্যাডমিন প্যানেলের কন্টেইনার লোড হয়
+    const observer = new MutationObserver(() => {
+        const adminList = document.getElementById('admin-user-list');
+        if (adminList && !document.getElementById('admin-audio-upload-section')) {
+            // অ্যাডমিন প্যানেলের ভেতরে একটি নতুন সেকশন তৈরি
+            const audioSection = document.createElement('div');
+            audioSection.id = 'admin-audio-upload-section';
+            audioSection.style.cssText = `
+                background: #fff;
+                border: 1px solid #dbdbdb;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            `;
+            audioSection.innerHTML = `
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;">
+                    <i class="fas fa-music" style="color: #0095f6;"></i> Audio Library Upload
+                </h3>
+                <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">
+                    এখান থেকে অডিও আপলোড করলে সেগুলো অ্যাপের মিউজিক সিলেকশন পেজে চলে যাবে।
+                </p>
+                <input type="text" id="admin-audio-name" placeholder="Song Name" 
+                    style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
+                <input type="text" id="admin-audio-artist" placeholder="Artist Name" 
+                    style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
+                <input type="file" id="admin-audio-file" accept="audio/*" 
+                    style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #fafafa;">
+                <button id="admin-audio-upload-btn" class="publish-btn" style="width: 100%; padding: 12px; background: #0095f6; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload Audio
+                </button>
+                <div id="admin-audio-list" style="margin-top: 15px;"></div>
+            `;
+            // অ্যাডমিন লিস্টের আগে সেকশনটি বসান
+            adminList.parentNode.insertBefore(audioSection, adminList);
+            
+            // ইভেন্ট লিসেনার যোগ
+            document.getElementById('admin-audio-upload-btn').addEventListener('click', uploadAdminAudio);
+            
+            // আপলোড করা অডিও লোড
+            loadAdminAudioList();
+        }
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+// ২. অডিও আপলোড ফাংশন
+async function uploadAdminAudio() {
+    const nameInput = document.getElementById('admin-audio-name');
+    const artistInput = document.getElementById('admin-audio-artist');
+    const fileInput = document.getElementById('admin-audio-file');
+    
+    const name = nameInput.value.trim();
+    const artist = artistInput.value.trim() || 'Unknown Artist';
+    const file = fileInput.files[0];
+    
+    if (!name) return showToast('অনুগ্রহ করে গানের নাম দিন');
+    if (!file) return showToast('অনুগ্রহ করে একটি অডিও ফাইল নির্বাচন করুন');
+    if (!file.type.startsWith('audio/')) return showToast('শুধুমাত্র অডিও ফাইল আপলোড করুন');
+    
+    // লোডিং দেখান
+    const overlay = document.getElementById('upload-progress-overlay');
+    const bar = document.getElementById('upload-progress-bar');
+    const txt = document.getElementById('upload-progress-text');
+    const stat = document.getElementById('progress-status-text');
+    
+    overlay.classList.remove('hidden');
+    stat.innerText = "Uploading Audio..."; 
+    bar.style.width = "0%"; 
+    txt.innerText = "0%";
+    
+    try {
+        // Cloudinary-তে আপলোড
+        const data = await uploadWithProgress(file, "Insta Story", (pct) => {
+            bar.style.width = pct + "%"; 
+            txt.innerText = pct + "%";
+        });
+        
+        // Firestore-এ সেভ করুন (admin_audio কালেকশনে)
+        await addDoc(collection(db, "admin_audio"), {
+            name: name,
+            artist: artist,
+            url: data.secure_url,
+            uploadedBy: currentUser.uid,
+            timestamp: serverTimestamp()
+        });
+        
+        showToast('✅ অডিও সফলভাবে আপলোড হয়েছে!');
+        nameInput.value = '';
+        artistInput.value = '';
+        fileInput.value = '';
+        
+        // লিস্ট রিফ্রেশ
+        loadAdminAudioList();
+        
+    } catch (e) {
+        console.error(e);
+        showToast('❌ অডিও আপলোড ব্যর্থ হয়েছে');
+    }
+    
+    overlay.classList.add('hidden');
+}
+
+// ৩. অ্যাডমিন প্যানেলে আপলোড করা অডিওর লিস্ট দেখানো
+async function loadAdminAudioList() {
+    const listContainer = document.getElementById('admin-audio-list');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e;">Loading...</p>';
+    
+    try {
+        const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
+        listContainer.innerHTML = '';
+        
+        if (snap.empty) {
+            listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e; text-align: center;">কোনো অডিও আপলোড করা হয়নি।</p>';
+            return;
+        }
+        
+        snap.forEach((docSnap) => {
+            const audio = docSnap.data();
+            const audioId = docSnap.id;
+            
+            const div = document.createElement('div');
+            div.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px;
+                border-bottom: 1px solid #efefef;
+                gap: 10px;
+            `;
+            div.innerHTML = `
+                <div style="flex: 1; overflow: hidden;">
+                    <div style="font-size: 13px; font-weight: 600; color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${audio.name}
+                    </div>
+                    <div style="font-size: 11px; color: #8e8e8e;">${audio.artist}</div>
+                </div>
+                <audio src="${audio.url}" controls style="height: 30px; width: 120px;"></audio>
+                <button onclick="deleteAdminAudio('${audioId}')" style="background: #dc3545; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            listContainer.appendChild(div);
+        });
+        
+    } catch (e) {
+        console.error(e);
+        listContainer.innerHTML = '<p style="font-size: 12px; color: #dc3545;">লোড করতে সমস্যা হয়েছে।</p>';
+    }
+}
+
+// ৪. অ্যাডমিন অডিও ডিলিট
+window.deleteAdminAudio = (audioId) => {
+    window.openProConfirm("এই অডিওটি ডিলিট করতে চান?", async () => {
+        try {
+            await deleteDoc(doc(db, "admin_audio", audioId));
+            showToast('🗑️ অডিও ডিলিট হয়েছে');
+            loadAdminAudioList();
+        } catch (e) {
+            showToast('ডিলিট করতে সমস্যা হয়েছে');
+        }
+    });
+};
+
+// ৫. অ্যাপের মিউজিক সিলেকশন পেজে অ্যাডমিন অডিও লোড করা
+// (আপনার বিদ্যমান openMusicModal ফাংশনটি ওভাররাইড করা হচ্ছে)
+const originalOpenMusicModal = window.openMusicModal;
+window.openMusicModal = async function() {
+    const container = document.getElementById('music-list-container');
+    container.innerHTML = '<p style="text-align:center; color:#8e8e8e; padding:20px;">Loading...</p>';
+    
+    try {
+        // অ্যাডমিন অডিও লোড
+        const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
+        
+        let adminAudioHtml = '';
+        if (!snap.empty) {
+            adminAudioHtml += `<div style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #0095f6; border-bottom: 1px solid #efefef; margin-bottom: 8px;">
+                <i class="fas fa-crown"></i> Admin Uploaded
+            </div>`;
+            snap.forEach((docSnap) => {
+                const audio = docSnap.data();
+                adminAudioHtml += `
+                    <div class="music-item" onclick="selectMusic('${audio.url}', '${audio.name.replace(/'/g, "\\'")}')">
+                        <div class="music-info">
+                            <div class="music-icon" style="background: linear-gradient(45deg, #0095f6, #00c6ff);"><i class="fas fa-music"></i></div>
+                            <div>
+                                <div style="font-weight:600; font-size:14px;">${audio.name}</div>
+                                <div style="font-size:12px; color:#8e8e8e;">${audio.artist}</div>
+                            </div>
+                        </div>
+                        <i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i>
+                    </div>
+                `;
+            });
+        }
+        
+        // ডিফল্ট মিউজিক লোড
+        let defaultHtml = `<div style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #8e8e8e; border-bottom: 1px solid #efefef; margin-bottom: 8px; margin-top: 10px;">
+            <i class="fas fa-globe"></i> Default Library
+        </div>`;
+        
+        cloudMusicLibrary.forEach(m => {
+            defaultHtml += `
+                <div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')">
+                    <div class="music-info">
+                        <div class="music-icon"><i class="fas fa-music"></i></div>
+                        <div>
+                            <div style="font-weight:600; font-size:14px;">${m.name}</div>
+                            <div style="font-size:12px; color:#8e8e8e;">${m.artist}</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = adminAudioHtml + defaultHtml;
+        
+    } catch (e) {
+        console.error(e);
+        // এরর হলে ডিফল্ট লাইব্রেরি দেখান
+        let defaultHtml = '';
+        cloudMusicLibrary.forEach(m => {
+            defaultHtml += `
+                <div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')">
+                    <div class="music-info">
+                        <div class="music-icon"><i class="fas fa-music"></i></div>
+                        <div>
+                            <div style="font-weight:600; font-size:14px;">${m.name}</div>
+                            <div style="font-size:12px; color:#8e8e8e;">${m.artist}</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i>
+                </div>
+            `;
+        });
+        container.innerHTML = defaultHtml;
+    }
+    
+    document.getElementById('music-modal').classList.remove('hidden');
+};
+
+// ৬. সার্চ ফিল্টারেও অ্যাডমিন অডিও যুক্ত করা
+const originalFilterMusic = window.filterMusic;
+window.filterMusic = async function(q) {
+    const queryStr = q.toLowerCase();
+    const container = document.getElementById('music-list-container');
+    container.innerHTML = '<p style="text-align:center; color:#8e8e8e; padding:10px;">Searching...</p>';
+    
+    try {
+        const snap = await getDocs(collection(db, "admin_audio"));
+        let html = '';
+        
+        snap.forEach((docSnap) => {
+            const audio = docSnap.data();
+            if (audio.name.toLowerCase().includes(queryStr) || audio.artist.toLowerCase().includes(queryStr)) {
+                html += `
+                    <div class="music-item" onclick="selectMusic('${audio.url}', '${audio.name.replace(/'/g, "\\'")}')">
+                        <div class="music-info">
+                            <div class="music-icon" style="background: linear-gradient(45deg, #0095f6, #00c6ff);"><i class="fas fa-music"></i></div>
+                            <div>
+                                <div style="font-weight:600; font-size:14px;">${audio.name}</div>
+                                <div style="font-size:12px; color:#8e8e8e;">${audio.artist}</div>
+                            </div>
+                        </div>
+                        <i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i>
+                    </div>
+                `;
+            }
+        });
+        
+        cloudMusicLibrary.filter(m => m.name.toLowerCase().includes(queryStr) || m.artist.toLowerCase().includes(queryStr)).forEach(m => {
+            html += `
+                <div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')">
+                    <div class="music-info">
+                        <div class="music-icon"><i class="fas fa-music"></i></div>
+                        <div>
+                            <div style="font-weight:600; font-size:14px;">${m.name}</div>
+                            <div style="font-size:12px; color:#8e8e8e;">${m.artist}</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html || '<p style="text-align:center; color:#8e8e8e; padding:20px;">কোনো মিউজিক পাওয়া যায়নি।</p>';
+        
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p style="text-align:center; color:#dc3545; padding:20px;">সার্চ করতে সমস্যা হয়েছে।</p>';
+    }
+};
+
+// ৭. অ্যাডমিন প্যানেল লোড করার সময় অডিও লিস্টও রিফ্রেশ করা
+const originalLoadAdminPanel = window.loadAdminPanel;
+window.loadAdminPanel = async function() {
+    await originalLoadAdminPanel();
+    // অডিও সেকশন তৈরি এবং লোড করা
+    setTimeout(() => {
+        if (document.getElementById('admin-audio-list')) {
+            loadAdminAudioList();
+        }
+    }, 500);
+};
+
+console.log('✅ Admin Audio Upload System loaded successfully!');
+// ============================================================
+// SHORTCUT LOGOUT BUTTON (প্রোফাইল পেজে লগ আউট বাটন)
+// ============================================================
+
+(function addLogoutButton() {
+    const observer = new MutationObserver(() => {
+        const container = document.getElementById('profile-action-container');
+        if (container && !document.getElementById('shortcut-logout-btn')) {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.id = 'shortcut-logout-btn';
+            logoutBtn.className = 'action-btn';
+            logoutBtn.style.cssText = 'background:#dc3545; color:#fff; border:none; font-weight:600;';
+            logoutBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Log Out';
+            logoutBtn.onclick = () => {
+                window.openProConfirm("Log Out of Insta Story?", () => {
+                    signOut(auth).then(() => {
+                        window.location.reload();
+                    });
+                });
+            };
+            container.appendChild(logoutBtn);
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+console.log('✅ Shortcut Logout Button loaded!');
     </script>
 </body>
 </html>
