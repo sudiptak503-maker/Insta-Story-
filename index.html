@@ -50,7 +50,8 @@
         /* Top Bar */
         .top-bar { position: sticky; top: 0; background: #fff; height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 1px solid #dbdbdb; z-index: 100; }
         .top-bar h2 { font-size: 1.5rem; font-weight: 600; font-family: cursive; cursor: pointer; }
-        .header-icon { font-size: 22px; cursor: pointer; color: #262626; }
+        .header-icon { font-size: 22px; cursor: pointer; color: #262626; transition: 0.2s; }
+        .header-icon:active { transform: scale(0.9); }
 
         /* Auth Screen */
         #auth-screen { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: #fff; }
@@ -128,13 +129,13 @@
         .chat-input-area button { background: none; border: none; color: #0095f6; font-weight: 600; font-size: 15px; cursor: pointer; }
 
         /* Modals Generic */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: flex-end; justify-content: center; transition: 0.3s; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: flex-end; justify-content: center; transition: 0.3s; opacity: 0; pointer-events: none;}
+        .modal-overlay:not(.hidden) { opacity: 1; pointer-events: auto; }
         .modal-overlay.center { align-items: center; padding: 20px; }
-        .modal-overlay.hidden { opacity: 0; pointer-events: none; }
         .modal-content { background: #fff; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px 15px 0 0; text-align: center; transition: 0.3s; max-height: 80vh; overflow-y: auto;}
         .modal-overlay.center .modal-content { border-radius: 15px; }
         .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-bottom: 1px solid #dbdbdb; padding-bottom: 10px;}
-        .modal-option-btn { display: flex; align-items: center; gap: 15px; width: 100%; padding: 15px; background: transparent; border: none; font-size: 16px; font-weight: 500; cursor: pointer; border-bottom: 1px solid #efefef; }
+        .modal-option-btn { display: flex; align-items: center; gap: 15px; width: 100%; padding: 15px; background: transparent; border: none; font-size: 16px; font-weight: 500; cursor: pointer; border-bottom: 1px solid #efefef; text-align: left; }
         .edit-field { text-align: left; margin-bottom: 15px; }
         .edit-field label { font-size: 12px; color: #8e8e8e; font-weight: 600; margin-bottom: 5px; display: block; }
         .edit-field input, .edit-field textarea { width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 5px; font-size: 14px; outline: none;}
@@ -174,12 +175,13 @@
 
         /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 50px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #dbdbdb; z-index: 1000; }
-        .nav-item { font-size: 22px; color: #262626; cursor: pointer; transition: 0.2s; background: none; border: none; outline: none; }
+        .nav-item { position: relative; font-size: 22px; color: #262626; cursor: pointer; transition: 0.2s; background: none; border: none; outline: none; }
         .nav-item.active { color: #000; transform: scale(1.1); }
         .upload-btn-nav { font-size: 26px; }
-        
+        .notif-badge { position: absolute; top: -2px; right: -4px; background: #ed4956; color: #fff; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; justify-content: center; align-items: center; font-weight: 600; display: none; }
+
         /* Story Viewer */
-        .story-viewer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 99999; display: flex; flex-direction: column; }
+        .story-viewer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 99999; display: flex; flex-direction: column; overflow: hidden; }
         .story-progress-container { display: flex; gap: 4px; padding: 10px; position: absolute; top: 0; left: 0; width: 100%; z-index: 10; }
         .story-progress-bar { flex: 1; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.1s linear; }
@@ -190,6 +192,7 @@
         .story-media-container { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
         .story-media-container img, .story-media-container video { max-width: 100%; max-height: 100vh; object-fit: contain; animation: storyFadeIn 0.3s ease-in-out; }
         @keyframes storyFadeIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+        /* Tap zones are kept for clicks, but swipe is added via JS */
         .tap-zone { position: absolute; top: 0; height: 100%; width: 50%; z-index: 5; }
         .tap-zone.left { left: 0; }
         .tap-zone.right { right: 0; }
@@ -225,6 +228,9 @@
         .selected-music-badge { background: #efefef; padding: 8px 12px; border-radius: 15px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 15px; color: #0095f6; width:100%; justify-content:space-between;}
         .audio-toggle-btn { position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
         .audio-toggle-btn.playing { background: rgba(0, 149, 246, 0.8); }
+
+        /* Verfication notice */
+        .verification-notice { background: rgba(220, 53, 69, 0.1); border-left: 3px solid #dc3545; padding: 10px; margin-bottom: 15px; font-size: 12px; color: #dc3545; display: none; }
     </style>
 </head>
 <body>
@@ -270,10 +276,50 @@
         <div id="home-page" class="page active">
             <div class="top-bar">
                 <h2 onclick="navigateTo('home')">Insta Story</h2>
-                <i class="fa-brands fa-facebook-messenger header-icon" onclick="navigateTo('messages')"></i>
+                <div style="display:flex; gap: 15px; align-items:center;">
+                    <i class="fa-solid fa-clapperboard header-icon" style="color:#0095f6;" onclick="navigateTo('reels')"></i>
+                    <i class="fa-brands fa-facebook-messenger header-icon" onclick="navigateTo('messages')"></i>
+                </div>
             </div>
             <div class="story-container" id="story-container"></div>
             <div class="feed-container" id="home-feed"></div>
+        </div>
+        
+        <!-- REELS PAGE (UPDATED) -->
+        <div id="reels-page" class="page" style="height: 100vh; overflow: hidden; background: #000; position: relative;">
+            
+            <!-- Top bar (Insta Story) -->
+            <div class="top-bar" style="background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); border-bottom: none; position: absolute; top:0; left:0; width: 100%; z-index: 10; height: 60px; display: flex; align-items: center; justify-content: center; padding: 0 15px;">
+                
+                <!-- Left: Back Button & Title -->
+                <div style="position: absolute; left: 15px; display: flex; align-items: center;">
+                    <i class="fa-solid fa-arrow-left header-icon" style="color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8);" onclick="navigateTo('home')"></i>
+                    <h2 style="font-size: 1.2rem; margin-left:15px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">Reels</h2>
+                </div>
+                
+                <!-- Center Fake Tabs: Following | For You -->
+                <div style="display: flex; gap: 15px; font-weight: 600; font-size: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+                    <span style="color: rgba(255,255,255,0.6);">Following</span>
+                    <span style="color: #fff; position: relative;">
+                        For You
+                        <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 25px; height: 2px; background: #fff; border-radius: 2px;"></div>
+                    </span>
+                </div>
+
+            </div>
+            
+            <!-- Iframe Cropping Wrapper -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden;">
+                <!-- Negative margin (-70px) & extra height (+140px) to hide top/bottom navs of Pikko Shorts -->
+                <iframe id="reels-iframe" src="https://sudiptak503-maker.github.io/pikko-shorts/" 
+                    style="width: 100%; height: calc(100vh + 140px); border: none; position: absolute; top: -70px; left: 0;" 
+                    allow="autoplay; encrypted-media" allowfullscreen>
+                </iframe>
+                
+                <!-- Invisible Overlay to block clicks on Profile Name and Follow Button (Bottom Left) -->
+                <div style="position: absolute; bottom: 0; left: 0; width: 70%; height: 150px; z-index: 5; background: transparent;"></div>
+            </div>
+            
         </div>
 
         <div id="explore-page" class="page">
@@ -316,7 +362,11 @@
         </div>
 
         <div id="profile-page" class="page">
-            <div class="top-bar"><h2 id="profile-top-name" style="font-family: 'Poppins', sans-serif; font-size: 1.2rem;">Profile</h2></div>
+            <div class="top-bar">
+                <h2 id="profile-top-name" style="font-family: 'Poppins', sans-serif; font-size: 1.2rem;">Profile</h2>
+                <!-- Profile Menu Icon -->
+                <i class="fa-solid fa-bars header-icon" id="profile-menu-icon" style="display:none;" onclick="openProfileMenu()"></i>
+            </div>
             <div class="profile-header">
                 <div class="profile-avatar-container">
                     <div class="profile-avatar"><img id="profile-page-avatar" src="https://picsum.photos/200" alt="profile" onerror="this.src='https://picsum.photos/200'"></div>
@@ -330,7 +380,7 @@
                 </div>
             </div>
             <div class="profile-bio">
-                <h3 id="profile-name">My Profile</h3>
+                <h3 id="profile-name" style="display:flex; align-items:center; gap:5px;">My Profile <i id="verified-badge-icon" class="fa-solid fa-circle-check" style="color:#0095f6; font-size:12px; display:none;"></i></h3>
                 <div class="bio-text" id="profile-bio-text">Welcome to my profile</div>
             </div>
             <div class="profile-actions" id="profile-action-container">
@@ -342,6 +392,45 @@
             </div>
             <div class="profile-grid" id="profile-posts"></div>
         </div>
+        
+        <!-- Profile Menu Modal -->
+        <div id="profile-menu-modal" class="modal-overlay hidden" onclick="closeModals(event)">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-title">Menu</div>
+                <button class="modal-option-btn" onclick="openAboutApp()"><i class="fa-solid fa-circle-info" style="width:20px;"></i> About App</button>
+                <button class="modal-option-btn" onclick="openPrivacyPolicy()"><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Privacy Policy</button>
+                <button class="modal-option-btn" onclick="showToast('Settings (Coming Soon)')"><i class="fa-solid fa-gear" style="width:20px;"></i> Settings (Coming Soon)</button>
+                <button class="modal-option-btn" onclick="openVerificationMenu()"><i class="fa-solid fa-certificate" style="width:20px;"></i> Verification</button>
+            </div>
+        </div>
+
+        <!-- Verification Modal -->
+        <div id="verification-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-title" style="color:#0095f6;"><i class="fa-solid fa-circle-check"></i> Get Verified</div>
+                <div id="verification-notice" class="verification-notice">আপনার প্রোফাইলে কিছু সমস্যার কারণে ভেরিফিকেশন ব্যাচটি দেওয়া সম্ভব হয়নি। 90 দিন পর পুনরায় চেষ্টা করুন।</div>
+                <p style="font-size: 13px; color: #8e8e8e; margin-bottom: 15px;">ভেরিফিকেশন ব্যাজ পেতে আপনার ১০০০+ ফলোয়ার প্রয়োজন। যদি আপনার ফলোয়ার না থাকে, তবে ৯০০ টাকা মান্থলি মেম্বারশিপের মাধ্যমে ব্লুটুথ ভেরিফিকেশন নিতে পারেন।</p>
+                <button class="publish-btn" style="margin-bottom: 10px;" onclick="applyForVerification()">Apply for Verification</button>
+            </div>
+        </div>
+
+        <!-- About App Modal -->
+        <div id="about-app-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
+            <div class="modal-content" onclick="event.stopPropagation()" style="text-align: left;">
+                <div class="modal-title">About App</div>
+                <p style="font-size: 13px; color: #262626; margin-bottom: 10px;"><strong>Insta Story</strong> is a social media application designed to share photos, stories, and connect with people. <br><br>ইন্সটা স্টোরি হলো একটি সোশ্যাল মিডিয়া অ্যাপ্লিকেশন যা ছবি, স্টোরি শেয়ার করা এবং মানুষের সাথে যুক্ত হওয়ার জন্য ডিজাইন করা হয়েছে।</p>
+                <button class="action-btn" style="width: 100%; margin-top: 10px;" onclick="closeModals()">Close</button>
+            </div>
+        </div>
+
+        <!-- Privacy Policy Modal -->
+        <div id="privacy-policy-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
+            <div class="modal-content" onclick="event.stopPropagation()" style="text-align: left;">
+                <div class="modal-title">Privacy Policy</div>
+                <p style="font-size: 13px; color: #262626; margin-bottom: 10px;">Your privacy is our priority. We do not sell your personal data to third parties. Uploaded media is securely stored and only visible based on your interaction settings.<br><br>আপনার প্রাইভেসি আমাদের কাছে গুরুত্বপূর্ণ। আমরা আপনার ডেটা কোনো থার্ড পার্টির কাছে বিক্রি করি না।</p>
+                <button class="action-btn" style="width: 100%; margin-top: 10px;" onclick="closeModals()">Close</button>
+            </div>
+        </div>
 
         <!-- Admin Panel Page -->
         <div id="admin-panel-page" class="page" style="background: #fafafa;">
@@ -349,6 +438,12 @@
                 <i class="fa-solid fa-arrow-left header-icon" onclick="navigateTo('profile')"></i>
                 <h2 style="font-size: 1.2rem; flex:1; margin-left:15px; color:#dc3545;">Admin Control</h2>
             </div>
+            
+            <div style="padding: 15px; background: #fff; margin-bottom: 10px; border-bottom: 1px solid #dbdbdb;">
+                <h3 style="font-size: 15px; margin-bottom: 10px;"><i class="fa-solid fa-certificate" style="color:#0095f6;"></i> Verification Requests</h3>
+                <div id="admin-verification-list"></div>
+            </div>
+
             <div class="list-container" id="admin-user-list" style="padding: 15px;">
                 <!-- ইউজার লিস্ট এখানে লোড হবে -->
             </div>
@@ -380,6 +475,7 @@
                 <div class="milestone-item"><span>100 Posts Upload</span> <strong style="color: #00e676;">₹400</strong></div>
                 <div style="background: #efefef; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center;">
                     <p style="font-size: 13px; color: #262626; font-weight: 600;" id="post-progress-text">Your Total Posts: 0</p>
+                    <p style="font-size: 11px; color: #8e8e8e; margin-top: 5px;">(সর্বোচ্চ 100 টি পোস্ট পর্যন্ত উপার্জিত টাকা 400 টাকা পাবেন)</p>
                 </div>
             </div>
 
@@ -401,7 +497,7 @@
             <button class="nav-item active" data-page="home" onclick="navigateTo('home')"><i class="fa-solid fa-house"></i></button>
             <button class="nav-item" data-page="explore" onclick="navigateTo('explore')"><i class="fa-solid fa-magnifying-glass"></i></button>
             <button class="nav-item upload-btn-nav" onclick="openUploadMenu()"><i class="fa-regular fa-square-plus"></i></button>
-            <button class="nav-item" data-page="notifications" onclick="navigateTo('notifications')"><i class="fa-regular fa-heart"></i></button>
+            <button class="nav-item" data-page="notifications" onclick="navigateTo('notifications')"><i class="fa-regular fa-heart"></i><span class="notif-badge" id="notif-badge-indicator"></span></button>
             <button class="nav-item" data-page="profile" onclick="viewProfile()"><i class="fa-regular fa-circle-user"></i></button>
         </div>
 
@@ -516,6 +612,7 @@
             <i class="fa-solid fa-xmark close-story" style="position:absolute; top:25px; right:15px; z-index:20; color:#fff;" onclick="closeStoryViewer()"></i>
             
             <div class="story-media-container" id="story-media-container">
+                <!-- Tap zones are kept for clicks, swipe is added via JS at the bottom -->
                 <div class="tap-zone left" onclick="prevStory()"></div>
                 <div class="tap-zone right" onclick="nextStory()"></div>
             </div>
@@ -556,7 +653,8 @@
         let currentUser = null, allUsers = [], allPosts = [], groupedStories = {}, myActiveStories = [];
         let viewedStories = {}; 
         let activeStoryUser = null;
-        let isFirstLoad = true; // পোস্টের ক্রম ঠিক রাখার জন্য
+        let isFirstLoad = true;
+        let unreadNotifCount = 0;
 
         // --- MUSIC FEATURE VARIABLES ---
         let selMusicUrl = null;
@@ -577,16 +675,43 @@
         window.navigateTo = (page) => {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Pause all media when leaving home page
+            if (page !== 'home') {
+                document.querySelectorAll('audio, video').forEach(media => media.pause());
+                document.querySelectorAll('.audio-toggle-btn').forEach(btn => {
+                    btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                    btn.classList.remove('playing');
+                });
+            }
+            
             document.getElementById(page + '-page').classList.add('active');
             
-            document.getElementById('bottom-nav-bar').style.display = (page === 'chat' || page === 'messages' || page === 'creator-hub' || page === 'admin-panel') ? 'none' : 'flex';
+            document.getElementById('bottom-nav-bar').style.display = (page === 'chat' || page === 'messages' || page === 'creator-hub' || page === 'admin-panel' || page === 'reels') ? 'none' : 'flex';
             if(document.querySelector(`.nav-item[data-page="${page}"]`)) document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
             
             if(page === 'profile') loadProfile();
             if(page === 'messages') renderMessagesList();
             if(page === 'creator-hub') loadCreatorHub();
             if(page === 'admin-panel') loadAdminPanel();
+            
+            if(page === 'notifications') {
+                localStorage.setItem('lastNotifCheck', Date.now());
+                document.getElementById('notif-badge-indicator').style.display = 'none';
+                unreadNotifCount = 0;
+            }
         };
+
+        // --- BACKGROUND STOP FEATURE ---
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                document.querySelectorAll('audio, video').forEach(media => media.pause());
+                document.querySelectorAll('.audio-toggle-btn').forEach(btn => {
+                    btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                    btn.classList.remove('playing');
+                });
+            }
+        });
 
         let isLogin = true;
         document.getElementById('toggle-auth').addEventListener('click', () => {
@@ -604,7 +729,7 @@
                 if (isLogin) { await signInWithEmailAndPassword(auth, e, p); } 
                 else {
                     const c = await createUserWithEmailAndPassword(auth, e, p);
-                    await setDoc(doc(db, "users", c.user.uid), { uid: c.user.uid, name: n, email: e, bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], postCount: 0, walletBalance: 0, storyStreak: 0, lastStoryDate: "", milestonesClaimed: {} });
+                    await setDoc(doc(db, "users", c.user.uid), { uid: c.user.uid, name: n, email: e, bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], postCount: 0, walletBalance: 0, storyStreak: 0, lastStoryDate: "", milestonesClaimed: {}, verificationStatus: "none" });
                 }
             } catch (err) { showToast("Authentication failed."); }
             document.getElementById('global-loader').classList.add('hidden');
@@ -612,7 +737,6 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // চেক করা ইউজার ব্লকড কিনা
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists() && userDoc.data().isBlocked) {
                     showToast("Your account has been blocked by Admin.");
@@ -624,8 +748,7 @@
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
                 
-                // অ্যাডমিন চেক
-                if (user.email === "sudeep@gmail.com") {
+                if (user.email === "sudeep@gmail.com" || user.email === "admin@gmail.com") {
                     document.getElementById('adminPanelBtn').style.display = 'block';
                 } else {
                     document.getElementById('adminPanelBtn').style.display = 'none';
@@ -659,38 +782,31 @@
                 renderStoryBar();
             });
             
-            // --- UPDATED LOGIC TO PREVENT POST JUMPING (PALIE JAWA BUG FIX) ---
             onSnapshot(query(collection(db, "posts")), (snap) => {
                 let fetchedPosts = [];
                 snap.forEach(doc => fetchedPosts.push({ id: doc.id, ...doc.data() }));
                 
                 if (isFirstLoad) {
-                    // প্রথমবার লোড হওয়ার সময় সুন্দর করে এলোমেলো (Shuffle) হবে
                     allPosts = shuffleArray(fetchedPosts);
                     isFirstLoad = false;
                     renderHomeFeed(); 
                 } else {
-                    // লাইক বা কমেন্ট করলে যেন পোস্টের সিরিয়াল এলোমেলো না হয় এবং পোস্ট পালিয়ে না যায়
                     let updatedPostsList = [];
-                    // আগের যে সিরিয়ালটা ছিল সেটা মেইনটেইন করা হচ্ছে
                     allPosts.forEach(oldPost => {
                         const updatedPost = fetchedPosts.find(p => p.id === oldPost.id);
                         if (updatedPost) updatedPostsList.push(updatedPost);
                     });
                     
-                    // কেউ যদি সম্পূর্ণ নতুন পোস্ট করে, সেটাকে শুরুতে রাখা হচ্ছে
                     const existingIds = allPosts.map(p => p.id);
                     const newlyAdded = fetchedPosts.filter(p => !existingIds.includes(p.id));
                     
                     allPosts = [...newlyAdded, ...updatedPostsList];
-                    
                     renderHomeFeed();
                 }
                 
                 if(document.getElementById('profile-page').classList.contains('active')) loadProfile();
                 document.getElementById('global-loader').classList.add('hidden');
             });
-            // ------------------------------------------------------------------
 
             onSnapshot(collection(db, "stories"), (snap) => {
                 const now = Date.now(); groupedStories = {}; myActiveStories = [];
@@ -728,9 +844,26 @@
         function listenToNotifications() {
             onSnapshot(collection(db, 'notifications'), (snap) => {
                 let notifs = [];
-                snap.forEach(doc => { const data = doc.data(); if(data.toUid === currentUser.uid) notifs.push({ id: doc.id, ...data }); });
+                let newNotifCount = 0;
+                let lastCheck = localStorage.getItem('lastNotifCheck') || 0;
+                
+                snap.forEach(doc => { 
+                    const data = doc.data(); 
+                    if(data.toUid === currentUser.uid) {
+                        notifs.push({ id: doc.id, ...data }); 
+                        if(data.timestamp > lastCheck) newNotifCount++;
+                    }
+                });
+                
                 notifs.sort((a,b) => b.timestamp - a.timestamp);
                 const list = document.getElementById('notifications-list'); list.innerHTML = '';
+                
+                if (newNotifCount > 0 && document.getElementById('notifications-page').className.indexOf('active') === -1) {
+                    const badge = document.getElementById('notif-badge-indicator');
+                    badge.innerText = newNotifCount > 9 ? '9+' : newNotifCount;
+                    badge.style.display = 'flex';
+                }
+                
                 if(notifs.length === 0) { list.innerHTML = '<p style="padding:20px; text-align:center; color:#8e8e8e;">No new notifications.</p>'; return; }
                 notifs.forEach(n => {
                     const u = allUsers.find(usr => usr.uid === n.fromUid) || {name: 'Someone', avatar: 'https://picsum.photos/100'};
@@ -757,7 +890,8 @@
                 document.querySelectorAll('audio[id^="post-audio-"]').forEach(a => {
                     if(a.id !== `post-audio-${postId}`) { a.pause(); document.getElementById(a.id.replace('post-audio-', 'audio-btn-')).innerHTML = '<i class="fas fa-volume-mute"></i>'; }
                 });
-                audioElem.play().catch(e=>console.log(e));
+                let p = audioElem.play();
+                if(p !== undefined) p.catch(e => console.log('blocked'));
                 btnElem.innerHTML = '<i class="fas fa-volume-up"></i>';
                 btnElem.classList.add('playing');
             } else {
@@ -770,22 +904,23 @@
         function renderHomeFeed() {
             const feed = document.getElementById("home-feed"); feed.innerHTML = '';
             allPosts.forEach(post => {
-                const u = allUsers.find(usr => usr.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100' };
+                const u = allUsers.find(usr => usr.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none' };
                 const isLiked = post.likes && post.likes.includes(currentUser.uid);
                 const isOwnPost = post.uid === currentUser.uid;
                 const userStories = groupedStories[post.uid] || [];
                 const hasUnviewedStory = userStories.some(s => !hasViewedStory(s.id));
+                const isVer = u.verificationStatus === 'verified' ? `<i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:12px; margin-left:3px;"></i>` : '';
                 
                 let avatarHtml = `<img src="${u.avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">`;
                 if (hasUnviewedStory) { avatarHtml = `<div class="feed-story-ring has-story"><img src="${u.avatar}"></div>`; }
 
                 let videoMuted = post.musicUrl ? 'muted' : '';
                 let mediaHtml = post.mediaUrl.match(/\.(mp4|webm|mov)$/i) 
-                    ? `<video class="post-media" src="${post.mediaUrl}" controls ${videoMuted}></video>` 
+                    ? `<video class="post-media" src="${post.mediaUrl}" controls loop ${videoMuted}></video>` 
                     : `<img class="post-media" src="${post.mediaUrl}">`;
                 
                 let audioHtml = post.musicUrl ? `
-                    <audio id="post-audio-${post.id}" src="${post.musicUrl}" loop></audio>
+                    <audio id="post-audio-${post.id}" src="${post.musicUrl}" loop preload="auto"></audio>
                     <div class="audio-toggle-btn" onclick="togglePostAudio('${post.id}')" id="audio-btn-${post.id}"><i class="fas fa-volume-mute"></i></div>
                     <div style="padding: 6px 15px; font-size:12px; color:#262626; background:#fafafa; border-bottom:1px solid #efefef; display:flex; align-items:center;">
                         <i class="fas fa-music" style="color:#0095f6; margin-right:8px; animation:spin 3s linear infinite;"></i> 
@@ -796,7 +931,7 @@
                 const div = document.createElement('div'); div.className = 'post-card';
                 div.innerHTML = `
                     <div class="post-header">
-                        <div class="post-user-info" onclick="handleFeedProfileClick('${post.uid}')">${avatarHtml}<span>${u.name}</span></div>
+                        <div class="post-user-info" onclick="handleFeedProfileClick('${post.uid}')">${avatarHtml}<span>${u.name}${isVer}</span></div>
                         ${isOwnPost ? `<i class="fa-regular fa-trash-can delete-post-btn" onclick="askDeletePost('${post.id}')"></i>` : ''}
                     </div>
                     <div class="post-media-wrapper" id="post-wrapper-${post.id}">
@@ -809,7 +944,7 @@
                         <i class="fa-regular fa-paper-plane" onclick="openShareModal('${post.id}')"></i>
                     </div>
                     <div class="post-likes" onclick="openPostLikes('${post.id}')">${post.likes ? post.likes.length : 0} likes</div>
-                    ${post.caption ? `<div class="post-caption"><span>${u.name}</span>${post.caption}</div>` : ''}
+                    ${post.caption ? `<div class="post-caption"><span>${u.name}</span> ${post.caption}</div>` : ''}
                 `;
                 feed.appendChild(div);
                 
@@ -833,7 +968,7 @@
                 }
             });
 
-            // Intersection Observer to Auto-Pause out-of-view media
+            // --- AUDIO AUTOPLAY LOGIC (UPDATED) ---
             if(window.feedObserver) window.feedObserver.disconnect();
             
             window.feedObserver = new IntersectionObserver((entries) => {
@@ -857,13 +992,38 @@
                             if (!video.paused) video.pause();
                         });
                     } else {
+                        // Play Video
                         videos.forEach(video => {
                             let p = video.play();
-                            if (p !== undefined) p.catch(e => console.log('Autoplay blocked'));
+                            if (p !== undefined) p.catch(e => console.log('Video Autoplay blocked'));
+                        });
+                        
+                        // Play Audio for the most visible post
+                        audios.forEach(audio => {
+                            // Pause all other global audios first to ensure no 2 play together
+                            document.querySelectorAll('audio[id^="post-audio-"]').forEach(a => {
+                                if (a !== audio && !a.paused) {
+                                    a.pause();
+                                    const b = document.getElementById(a.id.replace('post-audio-', 'audio-btn-'));
+                                    if(b) { b.innerHTML = '<i class="fas fa-volume-mute"></i>'; b.classList.remove('playing'); }
+                                }
+                            });
+                            
+                            let p = audio.play();
+                            if (p !== undefined) {
+                                p.then(() => {
+                                    const btnId = audio.id.replace('post-audio-', 'audio-btn-');
+                                    const btnElem = document.getElementById(btnId);
+                                    if (btnElem) {
+                                        btnElem.innerHTML = '<i class="fas fa-volume-up"></i>';
+                                        btnElem.classList.add('playing');
+                                    }
+                                }).catch(e => console.log('Audio Autoplay blocked without user interaction'));
+                            }
                         });
                     }
                 });
-            }, { threshold: 0.3 });
+            }, { threshold: 0.6 }); 
 
             const postCards = feed.querySelectorAll('.post-card');
             postCards.forEach(card => window.feedObserver.observe(card));
@@ -924,11 +1084,12 @@
             const post = allPosts.find(p => p.id === postId);
             if(!post) return showToast("Post unavailable");
             
-            const userObj = allUsers.find(u => u.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100' };
+            const userObj = allUsers.find(u => u.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none' };
             const isLiked = post.likes && post.likes.includes(currentUser.uid);
             const likeCount = post.likes ? post.likes.length : 0;
+            const isVer = userObj.verificationStatus === 'verified' ? `<i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:12px; margin-left:3px;"></i>` : '';
             
-            document.getElementById('pv-user-info').innerHTML = `<img src="${userObj.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;"><span>${userObj.name}</span>`;
+            document.getElementById('pv-user-info').innerHTML = `<img src="${userObj.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;"><span>${userObj.name}${isVer}</span>`;
             const mediaContainer = document.getElementById('pv-media');
             
             let videoMuted = post.musicUrl ? 'muted' : '';
@@ -971,12 +1132,12 @@
             let u = allUsers.find(usr => usr.uid === uid);
             
             if (!u) {
-                if (uid === currentUser.uid) u = { name: "My Profile", bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [] };
+                if (uid === currentUser.uid) u = { name: "My Profile", bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], verificationStatus: 'none' };
                 else return;
             }
 
             document.getElementById("profile-top-name").innerText = u.name || "Profile";
-            document.getElementById("profile-name").innerText = u.name || "User";
+            document.getElementById("profile-name").innerHTML = (u.name || "User") + (u.verificationStatus === 'verified' ? ` <i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:14px; margin-left:5px;"></i>` : '');
             document.getElementById("profile-bio-text").innerText = u.bio || "";
             document.getElementById("profile-page-avatar").src = u.avatar || "https://picsum.photos/200";
             document.getElementById("stat-followers").innerText = (u.followers || []).length;
@@ -984,18 +1145,21 @@
 
             const ac = document.getElementById("profile-action-container");
             const ab = document.getElementById("edit-avatar-btn");
+            const menuIcon = document.getElementById("profile-menu-icon");
             
             if(uid === currentUser.uid) {
                 ac.innerHTML = `<button class="action-btn" onclick="window.openEditProfile()">Edit Profile</button><button class="creator-btn" onclick="navigateTo('creator-hub')"><i class="fa-solid fa-chart-line"></i> Creator Hub</button>
-                                <button id="adminPanelBtn" class="action-btn" style="background:#dc3545; color:white; display:${currentUser.email === "sudeep@gmail.com" ? 'block' : 'none'};" onclick="navigateTo('admin-panel')">
+                                <button id="adminPanelBtn" class="action-btn" style="background:#dc3545; color:white; display:${(currentUser.email === "sudeep@gmail.com" || currentUser.email === "admin@gmail.com") ? 'block' : 'none'};" onclick="navigateTo('admin-panel')">
                                     <i class="fa-solid fa-shield-halved"></i> Admin Panel
                                 </button>`;
                 ab.style.display = 'flex';
+                menuIcon.style.display = 'block';
             } else {
                 const isFol = (u.followers || []).includes(currentUser.uid);
                 ac.innerHTML = `<button class="action-btn ${isFol ? '' : 'primary'}" onclick="toggleFollow('${uid}', ${isFol})">${isFol ? 'Following' : 'Follow'}</button>
                                 <button class="action-btn" onclick="openChat('${uid}')">Message</button>`;
                 ab.style.display = 'none';
+                menuIcon.style.display = 'none';
             }
 
             const grid = document.getElementById("profile-posts"); grid.innerHTML = '';
@@ -1011,11 +1175,78 @@
         }
 
         // ==========================================
+        // PROFILE MENU & VERIFICATION LOGIC
+        // ==========================================
+        window.openProfileMenu = () => document.getElementById('profile-menu-modal').classList.remove('hidden');
+        window.openAboutApp = () => { document.getElementById('profile-menu-modal').classList.add('hidden'); document.getElementById('about-app-modal').classList.remove('hidden'); };
+        window.openPrivacyPolicy = () => { document.getElementById('profile-menu-modal').classList.add('hidden'); document.getElementById('privacy-policy-modal').classList.remove('hidden'); };
+        
+        window.openVerificationMenu = async () => {
+            document.getElementById('profile-menu-modal').classList.add('hidden');
+            const uRef = doc(db, "users", currentUser.uid);
+            const uSnap = await getDoc(uRef);
+            const uData = uSnap.data();
+            
+            const notice = document.getElementById('verification-notice');
+            if(uData.verificationStatus === 'rejected') {
+                const rejectDate = uData.verificationLastRejected ? uData.verificationLastRejected.toMillis() : 0;
+                const daysPassed = (Date.now() - rejectDate) / (1000 * 60 * 60 * 24);
+                if (daysPassed < 90) {
+                    notice.style.display = 'block';
+                } else {
+                    notice.style.display = 'none';
+                    await updateDoc(uRef, { verificationStatus: 'none' });
+                }
+            } else {
+                notice.style.display = 'none';
+            }
+            
+            if(uData.verificationStatus === 'pending') {
+                showToast("Your verification request is pending admin review.");
+                return;
+            }
+            if(uData.verificationStatus === 'verified') {
+                showToast("Your account is already verified!");
+                return;
+            }
+
+            document.getElementById('verification-modal').classList.remove('hidden');
+        };
+
+        window.applyForVerification = async () => {
+            const uRef = doc(db, "users", currentUser.uid);
+            const uSnap = await getDoc(uRef);
+            const uData = uSnap.data();
+            
+            if(uData.verificationStatus === 'rejected') {
+                const rejectDate = uData.verificationLastRejected ? uData.verificationLastRejected.toMillis() : 0;
+                const daysPassed = (Date.now() - rejectDate) / (1000 * 60 * 60 * 24);
+                if(daysPassed < 90) return showToast(`You must wait ${Math.ceil(90 - daysPassed)} more days to apply again.`);
+            }
+
+            const followers = (uData.followers || []).length;
+            if(followers >= 1000) {
+                await updateDoc(uRef, { verificationStatus: 'pending' });
+                showToast("Request submitted successfully! Admin will review.");
+                document.getElementById('verification-modal').classList.add('hidden');
+            } else {
+                window.openProConfirm("ফলোয়ার 1000 এর কম! 900 টাকা মেম্বারশিপ ফি দিতে চান?", async () => {
+                    // Simulated Bluetooth Verification payment logic
+                    showToast("Payment processing via bluetooth verification... Success!");
+                    await updateDoc(uRef, { verificationStatus: 'pending' });
+                    document.getElementById('verification-modal').classList.add('hidden');
+                });
+            }
+        };
+
+        // ==========================================
         // ADMIN PANEL LOGIC
         // ==========================================
         window.loadAdminPanel = async () => {
             const list = document.getElementById('admin-user-list');
+            const vList = document.getElementById('admin-verification-list');
             list.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
+            vList.innerHTML = '';
             
             const querySnapshot = await getDocs(collection(db, "users"));
             list.innerHTML = '';
@@ -1025,6 +1256,7 @@
                 const uid = docSnap.id;
                 const isBlocked = u.isBlocked || false;
                 
+                // User List Rendering
                 const div = document.createElement('div');
                 div.className = 'list-item';
                 div.style.border = '1px solid #dbdbdb';
@@ -1047,7 +1279,33 @@
                     </div>
                 `;
                 list.appendChild(div);
+
+                // Verification List Rendering
+                if(u.verificationStatus === 'pending') {
+                    const vDiv = document.createElement('div');
+                    vDiv.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #efefef;';
+                    vDiv.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${u.avatar}" style="width:40px; height:40px; border-radius:50%;">
+                            <div><strong style="font-size:13px;">${u.name}</strong><br><span style="font-size:11px; color:#8e8e8e;">Followers: ${(u.followers||[]).length}</span></div>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="handleVerification('${uid}', 'verified')" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:12px; cursor:pointer;"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="handleVerification('${uid}', 'rejected')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:12px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    `;
+                    vList.appendChild(vDiv);
+                }
             });
+            if(vList.innerHTML === '') vList.innerHTML = '<p style="font-size:12px; color:#8e8e8e;">No pending requests.</p>';
+        };
+
+        window.handleVerification = async (uid, status) => {
+            const updateData = { verificationStatus: status };
+            if(status === 'rejected') updateData.verificationLastRejected = serverTimestamp();
+            await updateDoc(doc(db, "users", uid), updateData);
+            showToast(`Verification ${status}`);
+            loadAdminPanel();
         };
 
         window.toggleBlockUser = async (uid, currentStatus) => {
@@ -1195,7 +1453,7 @@
         window.openUploadMenu = () => document.getElementById('upload-menu-modal').classList.remove('hidden');
         
         window.closeModals = (e) => { 
-            if(!e || e.target.classList.contains('modal-overlay')) {
+            if(!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('close-btn')) {
                 document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
                 
                 if(previewAudioObj) { previewAudioObj.pause(); } 
@@ -1391,27 +1649,17 @@
                 let uData = uSnap.data();
                 let wBal = uData.walletBalance || 0;
 
-                // --- UPDATED MILESTONE LOGIC (Cumulative) ---
+                // --- POST EARNING MAX 400 (ONLY UP TO 100 POSTS) ---
                 if (upType === 'post') {
                     let pCount = (uData.postCount || 0) + 1;
                     let earned = 0;
                     let claimed = uData.milestonesClaimed || {};
                     
-                    if(pCount === 1 && !claimed['1']) { 
-                        earned += 2; 
-                        claimed['1'] = true; 
-                    }
-                    if(pCount === 10 && !claimed['10']) { 
-                        earned += 23; 
-                        claimed['10'] = true; 
-                    }
-                    if(pCount === 50 && !claimed['50']) { 
-                        earned += 175; 
-                        claimed['50'] = true; 
-                    }
-                    if(pCount === 100 && !claimed['100']) { 
-                        earned += 200; 
-                        claimed['100'] = true; 
+                    if(pCount <= 100) {
+                        if(pCount === 1 && !claimed['1']) { earned += 2; claimed['1'] = true; }
+                        if(pCount === 10 && !claimed['10']) { earned += 23; claimed['10'] = true; }
+                        if(pCount === 50 && !claimed['50']) { earned += 175; claimed['50'] = true; }
+                        if(pCount === 100 && !claimed['100']) { earned += 200; claimed['100'] = true; }
                     }
                     
                     wBal += earned;
@@ -1420,7 +1668,6 @@
                     if(earned > 0) showToast(`Milestone Reached! Earned ₹${earned}`);
                     else showToast("Post Published!");
                 } 
-                // ---------------------------------------------
                 else if (upType === 'story') {
                     const today = new Date().toISOString().split('T')[0];
                     let lastDate = uData.lastStoryDate || '';
@@ -1540,9 +1787,20 @@
             await addDoc(collection(db, `chats/${cId}/messages`), { sender: currentUser.uid, text: t, timestamp: Date.now() }); i.value = '';
         };
 
-        // --- STORY PLAYBACK UPDATE ---
+        // --- STORY PLAYBACK UPDATE (AUTO NEXT USER & SWIPE SUPPORT) ---
         let actStoryU = null, actStoryIdx = 0, stTime, isMySt = false, actStArr = [];
         window.startStoryViewer = (uid, isSelf) => {
+            // Mute all post audios in background to prevent overlapping music
+            document.querySelectorAll('audio[id^="post-audio-"]').forEach(a => {
+                a.pause();
+                const btnId = a.id.replace('post-audio-', 'audio-btn-');
+                const btnElem = document.getElementById(btnId);
+                if (btnElem) {
+                    btnElem.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                    btnElem.classList.remove('playing');
+                }
+            });
+
             actStoryU = uid; isMySt = isSelf; actStoryIdx = 0; actStArr = isSelf ? myActiveStories : groupedStories[uid];
             if(!actStArr || actStArr.length === 0) return;
             renderStoryMedia(); document.getElementById('story-viewer').classList.remove('hidden');
@@ -1554,16 +1812,28 @@
             document.getElementById('viewer-user-name').innerText = u.name; document.getElementById('viewer-user-avatar').src = u.avatar;
             
             const oldAudio = document.getElementById('current-story-audio');
-            if(oldAudio) oldAudio.pause();
+            if(oldAudio) {
+                oldAudio.pause();
+                oldAudio.currentTime = 0;
+            }
 
             let videoMuted = s.musicUrl ? 'muted' : '';
-            let storyAudioHtml = s.musicUrl ? `<audio id="current-story-audio" src="${s.musicUrl}" autoplay></audio>` : '';
+            let storyAudioHtml = s.musicUrl ? `<audio id="current-story-audio" src="${s.musicUrl}"></audio>` : '';
             
             document.getElementById('story-media-container').innerHTML = `
                 ${storyAudioHtml}
                 ${s.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? `<video src="${s.mediaUrl}" autoplay playsinline ${videoMuted} style="max-width: 100%; max-height: 100vh; object-fit: contain; animation: storyFadeIn 0.3s ease-in-out;"></video>` : `<img src="${s.mediaUrl}" style="animation: storyFadeIn 0.3s ease-in-out;">`}
                 <div class="tap-zone left" onclick="prevStory()"></div><div class="tap-zone right" onclick="nextStory()"></div>
             `;
+
+            // Explicitly play story audio if it exists
+            const newAudio = document.getElementById('current-story-audio');
+            if (newAudio) {
+                let p = newAudio.play();
+                if(p !== undefined) {
+                    p.catch(e => console.log('Story audio blocked by browser without interaction'));
+                }
+            }
             
             viewedStories[s.id] = true;
             
@@ -1598,17 +1868,71 @@
         }
 
         window.nextStory = () => { 
-            if(actStoryIdx < actStArr.length - 1) { actStoryIdx++; renderStoryMedia(); } 
-            else { actStArr.forEach(s => { viewedStories[s.id] = true; }); closeStoryViewer(); renderStoryBar(); } 
+            if(actStoryIdx < actStArr.length - 1) { 
+                actStoryIdx++; renderStoryMedia(); 
+            } 
+            else { 
+                actStArr.forEach(s => { viewedStories[s.id] = true; }); 
+                
+                // Logic to jump to the next user's story seamlessly
+                if (!isMySt) {
+                    const sortedUsers = Object.keys(groupedStories).sort((a, b) => {
+                        const aViewed = groupedStories[a].every(s => hasViewedStory(s.id));
+                        const bViewed = groupedStories[b].every(s => hasViewedStory(s.id));
+                        if (aViewed && !bViewed) return 1;
+                        if (!aViewed && bViewed) return -1;
+                        return 0;
+                    });
+                    
+                    const currentIdx = sortedUsers.indexOf(actStoryU);
+                    if (currentIdx !== -1 && currentIdx < sortedUsers.length - 1) {
+                        for(let i = currentIdx + 1; i < sortedUsers.length; i++) {
+                            const nextUser = sortedUsers[i];
+                            const hasUnviewed = groupedStories[nextUser].some(s => !hasViewedStory(s.id));
+                            if (hasUnviewed) {
+                                startStoryViewer(nextUser, false);
+                                return; // Auto navigated to next user
+                            }
+                        }
+                    }
+                }
+                closeStoryViewer(); renderStoryBar(); 
+            } 
         };
         window.prevStory = () => { if(actStoryIdx > 0) { actStoryIdx--; renderStoryMedia(); } else renderStoryMedia(); };
         window.closeStoryViewer = () => { 
             clearTimeout(stTime); 
-            const a = document.getElementById('current-story-audio'); if(a) a.pause();
+            const a = document.getElementById('current-story-audio'); 
+            if(a) { a.pause(); a.currentTime = 0; }
             document.getElementById('story-viewer').classList.add('hidden'); 
             document.getElementById('story-media-container').innerHTML = '';
             renderStoryBar();
         };
+
+        // --- STORY SWIPE LOGIC (Left / Right swipe to change story) ---
+        let touchstartX = 0;
+        let touchendX = 0;
+        const storyViewerObj = document.getElementById('story-viewer');
+        
+        storyViewerObj.addEventListener('touchstart', function(event) {
+            touchstartX = event.changedTouches[0].screenX;
+        }, false);
+        
+        storyViewerObj.addEventListener('touchend', function(event) {
+            touchendX = event.changedTouches[0].screenX;
+            handleStorySwipe();
+        }, false); 
+        
+        function handleStorySwipe() {
+            // Check if swiped left (User drags finger from right to left) -> Next Story
+            if (touchendX < touchstartX - 60) {
+                nextStory();
+            }
+            // Check if swiped right (User drags finger from left to right) -> Previous Story
+            if (touchendX > touchstartX + 60) {
+                prevStory();
+            }
+        }
 
         window.toggleStoryLike = async (id, isL) => { if(isL) await updateDoc(doc(db, "stories", id), { likes: arrayRemove(currentUser.uid) }); else await updateDoc(doc(db, "stories", id), { likes: arrayUnion(currentUser.uid) }); showToast("Liked!"); };
         window.handleStoryReply = async (e, id) => {
@@ -1783,8 +2107,8 @@
           });
           observer.observe(document.body, { childList: true, subtree: true });
       })();
-      // ============================================================
-      // 5 POSTS PER DAY LIMIT (একদিনে সর্বোচ্চ ৫টি পোস্ট)
+            // ============================================================
+      // 1 POST PER DAY LIMIT (একদিনে সর্বোচ্চ ১টি পোস্ট)
       // ============================================================
       const originalPublish = window.publishMedia;
       window.publishMedia = async function() {
@@ -1808,8 +2132,9 @@
                   }
               });
 
-              if (todaysPostCount >= 5) {
-                  showToast("⚠️ আপনি একদিনে সর্বোচ্চ ৫টি পোস্ট আপলোড করতে পারবেন!");
+              // এখানে 5 এর জায়গায় 1 করে দেওয়া হয়েছে
+              if (todaysPostCount >= 1) {
+                  showToast("⚠️ আপনি একদিনে সর্বোচ্চ ১টি পোস্ট আপলোড করতে পারবেন!");
                   document.getElementById('preview-modal').classList.add('hidden');
                   document.getElementById("mediaFile").value = "";
                   selFile = null;
