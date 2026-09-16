@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Insta Story</title>
@@ -237,6 +237,7 @@
         .adsterra-ad-container { display: flex; justify-content: center; align-items: center; overflow: hidden; background: #fff; padding: 10px 0; border-bottom: 1px solid #dbdbdb; }
         .adsterra-ad-container div { display: flex; justify-content: center; width: 100%; }
     </style>
+    <script type='text/javascript' src='//pl31362722.profitablecpmrate.com/61/0f/b6/610fb6868dd7ed421ef574fc957d1d51.js'></script>
 </head>
 <body>
 
@@ -630,7 +631,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD5ZsNOaprK3pJafOmRZYbC-s-HLAK-Msg",
@@ -791,44 +792,80 @@
             showToast("Payment submitted to Admin for manual review!");
             document.getElementById('payment-modal').classList.add('hidden');
         };
+          // 1. User Caching System (যেন বারবার একই ইউজারের জন্য Read না কাটে)
+        let userCache = {};
+        async function getUserData(uid) {
+            if (userCache[uid]) return userCache[uid]; // আগে থেকে থাকলে ডেটাবেসে যাবে না
+            
+            const docSnap = await getDoc(doc(db, "users", uid));
+            if (docSnap.exists()) {
+                userCache[uid] = { id: docSnap.id, ...docSnap.data() };
+                return userCache[uid];
+            }
+            return { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none', membershipStatus: 'none' };
+        }
 
-        function loadAllData() {
+        // 2. Post Pagination Logic (একসাথে মাত্র ১০টি পোস্ট আনবে)
+        let lastVisiblePost = null;
+        let isLoadingPosts = false;
+
+        async function loadPostsPagination() {
+            if (isLoadingPosts) return;
+            isLoadingPosts = true;
+
+            let postQuery = query(collection(db, "posts"), orderBy("timestamp", "desc"), limit(10));
+            if (lastVisiblePost) {
+                postQuery = query(collection(db, "posts"), orderBy("timestamp", "desc"), startAfter(lastVisiblePost), limit(10));
+            }
+
+            const snap = await getDocs(postQuery);
+            if (snap.empty) {
+                isLoadingPosts = false;
+                document.getElementById('global-loader').classList.add('hidden');
+                return; // আর কোনো পোস্ট নেই
+            }
+
+            lastVisiblePost = snap.docs[snap.docs.length - 1]; // শেষের পোস্ট সেভ করে রাখা
+            
+            snap.forEach(doc => {
+                let existing = allPosts.find(p => p.id === doc.id);
+                if (!existing) allPosts.push({ id: doc.id, ...doc.data() });
+            });
+
+            await renderHomeFeed(); // হোম ফিড রেন্ডার হবে
+            
+            document.getElementById('global-loader').classList.add('hidden');
+            isLoadingPosts = false;
+        }
+
+        // ইউজার স্ক্রল করলে পরের ১০টি পোস্ট আনার ইভেন্ট
+        window.addEventListener('scroll', () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+                if (document.getElementById('home-page').classList.contains('active')) {
+                    loadPostsPagination();
+                }
+            }
+        });
+
+                    function loadAllData() {
             document.getElementById('global-loader').classList.remove('hidden');
             document.getElementById('loader-text').innerText = "Loading Feed...";
 
-            onSnapshot(collection(db, "users"), (snap) => {
-                allUsers = []; snap.forEach(doc => allUsers.push({ id: doc.id, ...doc.data() }));
+            // ১. একবার সব ইউজার লোড করা (যাতে এক্সপ্লোর, নোটিফিকেশন ও প্রোফাইল ঠিক থাকে)
+            getDocs(collection(db, "users")).then((snap) => {
+                allUsers = []; 
+                snap.forEach(doc => allUsers.push({ id: doc.id, ...doc.data() }));
                 renderExploreGrid(); 
                 if(document.getElementById('profile-page').classList.contains('active')) loadProfile();
                 if(document.getElementById('messages-page').classList.contains('active')) renderMessagesList();
                 renderStoryBar();
             });
-            
-            onSnapshot(query(collection(db, "posts")), (snap) => {
-                let fetchedPosts = [];
-                snap.forEach(doc => fetchedPosts.push({ id: doc.id, ...doc.data() }));
-                
-                if (isFirstLoad) {
-                    allPosts = shuffleArray(fetchedPosts);
-                    isFirstLoad = false;
-                    renderHomeFeed(); 
-                } else {
-                    let updatedPostsList = [];
-                    allPosts.forEach(oldPost => {
-                        const updatedPost = fetchedPosts.find(p => p.id === oldPost.id);
-                        if (updatedPost) updatedPostsList.push(updatedPost);
-                    });
-                    
-                    const existingIds = allPosts.map(p => p.id);
-                    const newlyAdded = fetchedPosts.filter(p => !existingIds.includes(p.id));
-                    
-                    allPosts = [...newlyAdded, ...updatedPostsList];
-                    renderHomeFeed();
-                }
-                
-                if(document.getElementById('profile-page').classList.contains('active')) loadProfile();
-                document.getElementById('global-loader').classList.add('hidden');
-            });
+
+            // ২. হোম পেজের পোস্টের জন্য পেজিনেশন কল
+            loadPostsPagination();
+
+            // Stories এর onSnapshot আগের মতোই থাকবে...
+
 
             onSnapshot(collection(db, "stories"), (snap) => {
                 const now = Date.now(); groupedStories = {}; myActiveStories = [];
@@ -1129,20 +1166,59 @@
             document.getElementById('pv-user-info').innerHTML = `<img src="${userObj.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;"><span>${userObj.name}${isVer}${isMem}</span>`;
             const mediaContainer = document.getElementById('pv-media');
             
-            let videoMuted = post.musicUrl ? 'muted' : '';
-            mediaContainer.innerHTML = post.mediaUrl.match(/\.(mp4|webm|mov)$/i) 
+                        let videoMuted = post.musicUrl ? 'muted' : '';
+            let mediaHtml = post.mediaUrl.match(/\.(mp4|webm|mov)$/i) 
                 ? `<video src="${post.mediaUrl}" controls ${videoMuted} style="max-width:100%; max-height:50vh;"></video>` 
                 : `<img src="${post.mediaUrl}" style="max-width:100%; max-height:50vh; object-fit:contain;">`;
                 
             if(post.musicUrl) {
-                mediaContainer.innerHTML += `<audio src="${post.musicUrl}" autoplay loop></audio>`;
+                mediaHtml += `
+                    <audio id="pv-audio" src="${post.musicUrl}" loop></audio>
+                    <div class="audio-toggle-btn playing" onclick="togglePvAudio()" id="pv-audio-btn" style="bottom: 40px;"><i class="fas fa-volume-up"></i></div>
+                    <div style="position:absolute; bottom:0; left:0; width:100%; padding: 6px 15px; font-size:12px; color:#fff; background:rgba(0,0,0,0.5); display:flex; align-items:center;">
+                        <i class="fas fa-music" style="margin-right:8px; animation:spin 3s linear infinite;"></i> 
+                        <marquee scrollamount="4" style="width:100%; vertical-align:middle; font-weight:500;">${post.musicName || 'Original Audio'}</marquee>
+                    </div>
+                `;
             }
+            mediaContainer.innerHTML = mediaHtml;
+
+            if (post.musicUrl) {
+                setTimeout(() => {
+                    const pvAudio = document.getElementById('pv-audio');
+                    if(pvAudio) {
+                        let playPromise = pvAudio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(() => {
+                                const btn = document.getElementById('pv-audio-btn');
+                                if(btn) { btn.innerHTML = '<i class="fas fa-volume-mute"></i>'; btn.classList.remove('playing'); }
+                            });
+                        }
+                    }
+                }, 100);
+            }
+
+            
 
             document.getElementById('pv-actions').innerHTML = `<i id="pv-heart-icon" class="${isLiked ? 'fa-solid liked' : 'fa-regular'} fa-heart" style="${isLiked ? 'color:#ed4956;' : ''} cursor:pointer;" onclick="toggleModalLike('${post.id}', '${post.uid}')"></i><i class="fa-regular fa-comment" style="cursor:pointer; margin-left:15px;" onclick="openComments('${post.id}', '${post.uid}')"></i><i class="fa-regular fa-paper-plane" style="cursor:pointer; margin-left:15px;" onclick="openShareModal('${post.id}')"></i>`;
             document.getElementById('pv-likes').innerText = `${likeCount} likes`;
             document.getElementById('pv-caption').innerHTML = post.caption ? `<span>${userObj.name}</span> ${post.caption}` : '';
             
             document.getElementById('post-viewer-modal').classList.remove('hidden');
+        };
+              window.togglePvAudio = () => {
+            const aud = document.getElementById('pv-audio');
+            const btn = document.getElementById('pv-audio-btn');
+            if(!aud || !btn) return;
+            if(aud.paused) {
+                aud.play();
+                btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                btn.classList.add('playing');
+            } else {
+                aud.pause();
+                btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                btn.classList.remove('playing');
+            }
         };
 
         window.toggleModalLike = async (postId, postOwnerUid) => {
@@ -1199,16 +1275,49 @@
                 menuIcon.style.display = 'none';
             }
 
-            const grid = document.getElementById("profile-posts"); grid.innerHTML = '';
-            const posts = allPosts.filter(p => p.uid === uid);
-            document.getElementById("stat-posts").innerText = posts.length;
+                         const grid = document.getElementById("profile-posts"); 
+            grid.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
             
-            posts.forEach(p => {
-                const div = document.createElement('div'); div.className = 'grid-item';
-                div.onclick = () => openPostViewer(p.id);
-                div.innerHTML = p.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? `<video src="${p.mediaUrl}" muted></video>` : `<img src="${p.mediaUrl}">`;
-                grid.appendChild(div);
+            // ফায়ারবেস থেকে প্রোফাইলের নির্দিষ্ট সব পোস্ট আনা (শুধু where দিয়ে)
+            const q = query(collection(db, "posts"), where("uid", "==", uid));
+            
+            getDocs(q).then((snap) => {
+                grid.innerHTML = '';
+                
+                // ডেটাগুলো একটি array-তে নিয়ে আসা
+                let userPosts = [];
+                snap.forEach(docSnap => {
+                    userPosts.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                
+                // অ্যাপের ভেতরেই পোস্টগুলোকে নতুন থেকে পুরনো অনুযায়ী সাজানো (Local Sorting)
+                userPosts.sort((a, b) => {
+                    const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp || 0);
+                    const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp || 0);
+                    return timeB - timeA;
+                });
+
+                document.getElementById("stat-posts").innerText = userPosts.length;
+                
+                if (userPosts.length === 0) {
+                    grid.innerHTML = '<p style="text-align:center; width:100%; padding:20px; color:#8e8e8e;">No posts yet.</p>';
+                    return;
+                }
+                
+                userPosts.forEach(p => {
+                    // পোস্টটি ভিউয়ারের জন্য allPosts-এ না থাকলে সেভ করে রাখা
+                    if(!allPosts.find(x => x.id === p.id)) allPosts.push(p);
+                    
+                    const div = document.createElement('div'); div.className = 'grid-item';
+                    div.onclick = () => openPostViewer(p.id);
+                    div.innerHTML = p.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? `<video src="${p.mediaUrl}" muted></video>` : `<img src="${p.mediaUrl}">`;
+                    grid.appendChild(div);
+                });
+            }).catch(e => { 
+                console.error(e);
+                grid.innerHTML = '<p style="text-align:center; width:100%; padding:20px; color:#8e8e8e;">No posts found.</p>'; 
             });
+         
         }
 
         window.openProfileMenu = () => document.getElementById('profile-menu-modal').classList.remove('hidden');
@@ -1969,6 +2078,7 @@
 
     </script>
     <!-- Adsterra Main Script (Loaded once at the end of body) -->
-    <script async="async" data-cfasync="false" src="//pl31355821.profitablecpmnetwork.com/2425ef7a251ef180c0d2a5d9961fab3e/invoke.js"></script>
+<script type='text/javascript' src='//pl31362723.profitablecpmrate.com/e9/e6/b8/e9e6b83ae35589707b856fca8e327a95.js'></script>
+
 </body>
 </html>
