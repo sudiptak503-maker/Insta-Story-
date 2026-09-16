@@ -82,7 +82,7 @@
         .story-ring.viewed { background: #dbdbdb; animation: none; box-shadow: none; }
         .story-ring.viewed img { border-color: #dbdbdb; opacity: 0.6; }
 
-        /* Home Feed & Ads */
+        /* Home Feed */
         .feed-container { background: #fafafa; }
         .feed-story-ring { width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; padding: 2px; }
         .feed-story-ring.has-story { background: linear-gradient(45deg, #f9b700, #f9b700, #f9b700); animation: goldPulse 1.5s infinite; }
@@ -102,7 +102,7 @@
         .post-caption { padding: 0 15px 10px 15px; font-size: 13px; }
         .post-comments { padding: 0 15px 10px 15px; font-size: 13px; color: #8e8e8e; cursor: pointer; }
 
-        /* Explore Grid */
+        /* Explore Grid & Leaderboard */
         .explore-search { padding: 10px 15px; background: #fff; border-bottom: 1px solid #dbdbdb; position: relative; }
         .explore-search input { width: 100%; padding: 10px 15px 10px 40px; border: 1px solid #dbdbdb; border-radius: 8px; background: #fafafa; font-size: 14px; outline: none; }
         .explore-search i { position: absolute; top: 50%; left: 25px; transform: translateY(-50%); color: #8e8e8e; font-size: 16px; }
@@ -232,12 +232,7 @@
         /* Verfication notice & Member Badge */
         .verification-notice { background: rgba(220, 53, 69, 0.1); border-left: 3px solid #dc3545; padding: 10px; margin-bottom: 15px; font-size: 12px; color: #dc3545; display: none; }
         .member-badge { background: linear-gradient(45deg, #f9b700, #ff5722); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 5px; vertical-align: middle;}
-        
-        /* Adsterra Ad Container Styling */
-        .adsterra-ad-container { display: flex; justify-content: center; align-items: center; overflow: hidden; background: #fff; padding: 10px 0; border-bottom: 1px solid #dbdbdb; }
-        .adsterra-ad-container div { display: flex; justify-content: center; width: 100%; }
     </style>
-    <script type='text/javascript' src='//pl31362722.profitablecpmrate.com/61/0f/b6/610fb6868dd7ed421ef574fc957d1d51.js'></script>
 </head>
 <body>
 
@@ -321,7 +316,19 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="exploreSearch" placeholder="Search users..." oninput="searchUsers()">
             </div>
-            <div class="explore-grid profile-grid" id="explore-grid"></div>
+            
+            <div id="explore-leaderboard" style="padding: 15px;">
+                <div style="display:flex; gap:10px; margin-bottom: 10px;">
+                    <button class="action-btn primary" id="btn-lb-normal" onclick="switchLeaderboard('normal')">Leaderboard</button>
+                    <button class="action-btn" id="btn-lb-blue" onclick="switchLeaderboard('blue')">Blue Tick LB</button>
+                </div>
+                <div style="font-size:12px; color:#8e8e8e; margin-bottom:15px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #efefef;" id="lb-rules-text">
+                    Rules: মেম্বারশিপ নেওয়া ইউজারদের র‍্যাংকিং। ৩ মাস বা মোট ৩ বার ১ম হলে ব্লু টিক!
+                </div>
+                <div class="list-container" id="leaderboard-list"></div>
+            </div>
+
+            <div class="explore-grid profile-grid hidden" id="explore-grid"></div>
         </div>
 
         <div id="notifications-page" class="page">
@@ -455,12 +462,36 @@
                 <h2 style="font-size: 1.2rem; flex:1; margin-left:15px; color:#dc3545;">Admin Control</h2>
             </div>
             
-            <div style="padding: 15px; background: #fff; margin-bottom: 10px; border-bottom: 1px solid #dbdbdb;">
-                <h3 style="font-size: 15px; margin-bottom: 10px;"><i class="fa-solid fa-certificate" style="color:#0095f6;"></i> Verification Requests</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; padding: 15px; border-bottom: 1px solid #dbdbdb;">
+                <button class="action-btn primary" id="btn-admin-users" onclick="showAdminSection('users')">Users</button>
+                <button class="action-btn" id="btn-admin-verification" onclick="showAdminSection('verification')">Verifications</button>
+                <button class="action-btn" id="btn-admin-membership" onclick="showAdminSection('membership')">Memberships</button>
+                <button class="action-btn" id="btn-admin-audio" onclick="showAdminSection('audio')">Audio</button>
+            </div>
+
+            <div id="admin-sec-users" class="admin-sec" style="padding: 15px;">
+                <div class="list-container" id="admin-user-list"></div>
+            </div>
+
+            <div id="admin-sec-verification" class="admin-sec" style="padding: 15px; display: none;">
                 <div id="admin-verification-list"></div>
             </div>
 
-            <div class="list-container" id="admin-user-list" style="padding: 15px;"></div>
+            <div id="admin-sec-membership" class="admin-sec" style="padding: 15px; display: none;">
+                <div id="admin-membership-list"></div>
+            </div>
+
+            <div id="admin-sec-audio" class="admin-sec" style="padding: 15px; display: none;">
+                <div style="background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;"><i class="fas fa-music" style="color: #0095f6;"></i> Audio Library Upload</h3>
+                    <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">এখান থেকে অডিও আপলোড করলে সেগুলো অ্যাপের মিউজিক সিলেকশন পেজে চলে যাবে।</p>
+                    <input type="text" id="admin-audio-name" placeholder="Song Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
+                    <input type="text" id="admin-audio-artist" placeholder="Artist Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
+                    <input type="file" id="admin-audio-file" accept="audio/*" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #fafafa;">
+                    <button id="admin-audio-upload-btn" class="publish-btn" onclick="uploadAdminAudio()" style="width: 100%; padding: 12px; background: #0095f6; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;"><i class="fas fa-cloud-upload-alt"></i> Upload Audio</button>
+                    <div id="admin-audio-list" style="margin-top: 15px;"></div>
+                </div>
+            </div>
         </div>
 
         <div id="creator-hub-page" class="page" style="background: #fafafa;">
@@ -470,14 +501,9 @@
             </div>
             <div class="creator-header">
                 <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 5px;">Earn App Program</h3>
-                <p style="font-size: 13px; opacity: 0.9;">Upload Posts & Stories to Earn Real Cash Instantly!</p>
+                <p style="font-size: 13px; opacity: 0.9;">Upload Posts & Stories to Earn Real Cash Instantly! (Active Membership Required)</p>
             </div>
             
-            <!-- Creator Hub Adsterra Ad -->
-            <div class="adsterra-ad-container" style="background: #fafafa; border: none; padding: 15px;">
-                <div id="container-2425ef7a251ef180c0d2a5d9961fab3e" style="width: 100%; min-height: 250px;"></div>
-            </div>
-
             <div class="wallet-card">
                 <h4 style="color: #aaa; font-weight: 500;">Available Earnings</h4>
                 <h1 id="creator-wallet-bal">₹0</h1>
@@ -486,7 +512,7 @@
                 <button class="withdraw-btn" onclick="withdrawToZuuPay()">Withdraw Now</button>
             </div>
             
-                        <div class="milestone-box">
+            <div class="milestone-box">
                 <h4 style="margin-bottom: 12px; color: #262626; font-size: 1.1rem;"><i class="fa-solid fa-image" style="color:#0095f6;"></i> Post Milestones</h4>
                 
                 <div style="background: #fafafa; border: 1px solid #efefef; border-radius: 8px; padding: 10px 15px; margin-bottom: 15px;">
@@ -505,11 +531,10 @@
                 </div>
             </div>
 
-
-                    <div class="milestone-box">
+            <div class="milestone-box">
                 <h4 style="margin-bottom: 10px; color: #262626; font-size: 1.1rem;"><i class="fa-solid fa-circle-notch" style="color:#e1306c;"></i> Story Upload Earnings</h4>
                 <p style="font-size: 12.5px; color: #8e8e8e; margin-bottom: 15px; line-height: 1.5;">
-                    প্রথম স্টোরি আপলোড করলে <strong>₹২</strong> পাবেন (মেম্বারশিপ থাকলে <strong>₹৩</strong>)। আনলিমিটেড স্টোরি আপলোড করলেও টাকা শুধু একবার পাবেন এবং পুনরায় স্টোরির টাকা পেতে ঠিক <strong>২৪ ঘণ্টা</strong> অপেক্ষা করতে হবে।
+                    প্রথম স্টোরি আপলোড করলে <strong>₹৩</strong> পাবেন (অবশ্যই মেম্বারশিপ থাকতে হবে)। আনলিমিটেড স্টোরি আপলোড করলেও টাকা শুধু একবার পাবেন এবং পুনরায় স্টোরির টাকা পেতে ঠিক <strong>২৪ ঘণ্টা</strong> অপেক্ষা করতে হবে।
                 </p>
             </div>
         </div>
@@ -638,7 +663,7 @@
             </div>
             <div class="story-bottom-bar" id="story-bottom-bar"></div>
         </div>
-    </>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -709,7 +734,11 @@
             if(page === 'profile') loadProfile();
             if(page === 'messages') renderMessagesList();
             if(page === 'creator-hub') loadCreatorHub();
-            if(page === 'admin-panel') loadAdminPanel();
+            if(page === 'admin-panel') {
+                loadAdminPanel();
+                showAdminSection('users');
+            }
+            if(page === 'explore') switchLeaderboard('normal');
             
             if(page === 'notifications') {
                 localStorage.setItem('lastNotifCheck', Date.now());
@@ -744,7 +773,7 @@
                 if (isLogin) { await signInWithEmailAndPassword(auth, e, p); } 
                 else {
                     const c = await createUserWithEmailAndPassword(auth, e, p);
-                    await setDoc(doc(db, "users", c.user.uid), { uid: c.user.uid, name: n, email: e, bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], postCount: 0, walletBalance: 0, storyStreak: 0, membershipStatus: 'none', verificationStatus: "none" });
+                    await setDoc(doc(db, "users", c.user.uid), { uid: c.user.uid, name: n, email: e, bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], postCount: 0, walletBalance: 0, storyStreak: 0, membershipStatus: 'none', membershipRequest: 'none', verificationStatus: "none" });
                 }
             } catch (err) { showToast("Authentication failed."); }
             document.getElementById('global-loader').classList.add('hidden');
@@ -801,14 +830,26 @@
             const txnId = document.getElementById('payment-txn-id').value.trim();
             if (txnId.length < 10) return showToast("Enter a valid UPI Transaction ID");
             
+            if(paymentTypeContext === 'membership') {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    membershipRequest: 'pending',
+                    paymentTxnId: txnId
+                });
+            } else if (paymentTypeContext === 'verification') {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    verificationStatus: 'pending',
+                    paymentTxnId: txnId
+                });
+            }
+            
             showToast("Payment submitted to Admin for manual review!");
             document.getElementById('payment-modal').classList.add('hidden');
         };
-          // 1. User Caching System (যেন বারবার একই ইউজারের জন্য Read না কাটে)
+
+        // User Caching System
         let userCache = {};
         async function getUserData(uid) {
-            if (userCache[uid]) return userCache[uid]; // আগে থেকে থাকলে ডেটাবেসে যাবে না
-            
+            if (userCache[uid]) return userCache[uid];
             const docSnap = await getDoc(doc(db, "users", uid));
             if (docSnap.exists()) {
                 userCache[uid] = { id: docSnap.id, ...docSnap.data() };
@@ -817,7 +858,6 @@
             return { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none', membershipStatus: 'none' };
         }
 
-        // 2. Post Pagination Logic (একসাথে মাত্র ১০টি পোস্ট আনবে)
         let lastVisiblePost = null;
         let isLoadingPosts = false;
 
@@ -834,23 +874,22 @@
             if (snap.empty) {
                 isLoadingPosts = false;
                 document.getElementById('global-loader').classList.add('hidden');
-                return; // আর কোনো পোস্ট নেই
+                return;
             }
 
-            lastVisiblePost = snap.docs[snap.docs.length - 1]; // শেষের পোস্ট সেভ করে রাখা
+            lastVisiblePost = snap.docs[snap.docs.length - 1]; 
             
             snap.forEach(doc => {
                 let existing = allPosts.find(p => p.id === doc.id);
                 if (!existing) allPosts.push({ id: doc.id, ...doc.data() });
             });
 
-            await renderHomeFeed(); // হোম ফিড রেন্ডার হবে
+            await renderHomeFeed();
             
             document.getElementById('global-loader').classList.add('hidden');
             isLoadingPosts = false;
         }
 
-        // ইউজার স্ক্রল করলে পরের ১০টি পোস্ট আনার ইভেন্ট
         window.addEventListener('scroll', () => {
             if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
                 if (document.getElementById('home-page').classList.contains('active')) {
@@ -859,25 +898,20 @@
             }
         });
 
-                    function loadAllData() {
+        function loadAllData() {
             document.getElementById('global-loader').classList.remove('hidden');
             document.getElementById('loader-text').innerText = "Loading Feed...";
 
-            // ১. একবার সব ইউজার লোড করা (যাতে এক্সপ্লোর, নোটিফিকেশন ও প্রোফাইল ঠিক থাকে)
             getDocs(collection(db, "users")).then((snap) => {
                 allUsers = []; 
                 snap.forEach(doc => allUsers.push({ id: doc.id, ...doc.data() }));
-                renderExploreGrid(); 
+                if(document.getElementById('explore-page').classList.contains('active')) switchLeaderboard('normal'); 
                 if(document.getElementById('profile-page').classList.contains('active')) loadProfile();
                 if(document.getElementById('messages-page').classList.contains('active')) renderMessagesList();
                 renderStoryBar();
             });
 
-            // ২. হোম পেজের পোস্টের জন্য পেজিনেশন কল
             loadPostsPagination();
-
-            // Stories এর onSnapshot আগের মতোই থাকবে...
-
 
             onSnapshot(collection(db, "stories"), (snap) => {
                 const now = Date.now(); groupedStories = {}; myActiveStories = [];
@@ -896,15 +930,6 @@
                 });
                 renderStoryBar();
             });
-        }
-
-        function shuffleArray(arr) {
-            const shuffled = [...arr];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
         }
 
         async function sendNotification(toUid, type, postId = null) {
@@ -1000,8 +1025,7 @@
 
         function renderHomeFeed() {
             const feed = document.getElementById("home-feed"); feed.innerHTML = '';
-            let postCounter = 0;
-
+            
             allPosts.forEach(post => {
                 const u = allUsers.find(usr => usr.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none', membershipStatus: 'none' };
                 const isLiked = post.likes && post.likes.includes(currentUser.uid);
@@ -1050,26 +1074,6 @@
                 
                 const wrap = div.querySelector(`#post-wrapper-${post.id}`);
                 if (wrap) attachDoubleTapLike(wrap, post, isLiked);
-                
-                postCounter++;
-                
-                // === Adsterra Native Banner Ad (Every 5 posts) ===
-                if (postCounter % 5 === 0) {
-                    const adDiv = document.createElement('div');
-                    adDiv.className = 'post-card';
-                    adDiv.innerHTML = `
-                        <div class="post-header" style="border-bottom:1px solid #efefef;">
-                            <div class="post-user-info">
-                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #0095f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;">Ad</div>
-                                <span>Sponsored</span>
-                            </div>
-                        </div>
-                        <div class="adsterra-ad-container" style="min-height: 250px; padding: 10px; display: flex; justify-content: center; align-items: center;">
-                            <div id="container-2425ef7a251ef180c0d2a5d9961fab3e" style="width: 100%;"></div>
-                        </div>
-                    `;
-                    feed.appendChild(adDiv);
-                }
             });
 
             if(window.feedObserver) window.feedObserver.disconnect();
@@ -1114,15 +1118,79 @@
             postCards.forEach(card => window.feedObserver.observe(card));
         }
 
-        window.searchUsers = () => renderExploreGrid();
-        function renderExploreGrid() {
-            const q = document.getElementById("exploreSearch") ? document.getElementById("exploreSearch").value.toLowerCase() : '';
+        window.searchUsers = () => {
+            const q = document.getElementById("exploreSearch").value.trim().toLowerCase();
+            if(q.length > 0) {
+                document.getElementById("explore-leaderboard").classList.add("hidden");
+                document.getElementById("explore-grid").classList.remove("hidden");
+                renderExploreGrid(q);
+            } else {
+                document.getElementById("explore-leaderboard").classList.remove("hidden");
+                document.getElementById("explore-grid").classList.add("hidden");
+                switchLeaderboard('normal');
+            }
+        };
+
+        function renderExploreGrid(q) {
             const grid = document.getElementById("explore-grid"); grid.innerHTML = '';
             let f = allUsers.filter(u => u.uid !== currentUser.uid);
             if(q) f = f.filter(u => (u.name || '').toLowerCase().includes(q));
             f.forEach(user => {
                 const div = document.createElement('div'); div.className = 'grid-item'; div.onclick = () => viewProfile(user.uid);
                 div.innerHTML = `<img src="${user.avatar || 'https://picsum.photos/200'}">`; grid.appendChild(div);
+            });
+        }
+
+        window.switchLeaderboard = (type) => {
+            if(type === 'normal') {
+                document.getElementById('btn-lb-normal').classList.add('primary');
+                document.getElementById('btn-lb-blue').classList.remove('primary');
+                document.getElementById('lb-rules-text').innerText = "Rules: মেম্বারশিপ নেওয়া ইউজারদের র‍্যাংকিং। ৩ মাস বা মোট ৩ বার ১ম হলে অটো ব্লু টিক!";
+            } else {
+                document.getElementById('btn-lb-blue').classList.add('primary');
+                document.getElementById('btn-lb-normal').classList.remove('primary');
+                document.getElementById('lb-rules-text').innerText = "Rules: ব্লু টিক ভেরিফাইড ইউজারদের র‍্যাংকিং। মাসে ১ম স্থানে থাকলে ৫০০ টাকা পুরস্কার (৩০ দিনে ৩০ পোস্ট আবশ্যক)।";
+            }
+            renderLeaderboardList(type);
+        };
+
+        function renderLeaderboardList(type) {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+            
+            let filtered = allUsers.filter(u => u.uid !== currentUser.uid);
+            if(type === 'normal') {
+                filtered = filtered.filter(u => u.membershipStatus === 'active' && u.verificationStatus !== 'verified');
+            } else {
+                filtered = filtered.filter(u => u.verificationStatus === 'verified');
+            }
+            
+            filtered.sort((a, b) => {
+                const sA = (a.postCount || 0) * 10 + (a.followers || []).length * 5;
+                const sB = (b.postCount || 0) * 10 + (b.followers || []).length * 5;
+                return sB - sA; 
+            });
+            
+            if(filtered.length === 0) {
+                list.innerHTML = '<p style="text-align:center; padding: 20px; color:#8e8e8e;">কোনো ইউজার পাওয়া যায়নি।</p>';
+                return;
+            }
+            
+            filtered.forEach((u, index) => {
+                const score = (u.postCount || 0) * 10 + (u.followers || []).length * 5;
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.onclick = () => viewProfile(u.uid);
+                let rankColor = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? '#cd7f32' : '#8e8e8e';
+                div.innerHTML = `
+                    <div style="width: 30px; font-weight: bold; color: ${rankColor}; font-size: 16px;">#${index + 1}</div>
+                    <img src="${u.avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                    <div class="list-item-content">
+                        <strong>${u.name}</strong>
+                        <span style="font-size: 11px;">Score: ${score}</span>
+                    </div>
+                `;
+                list.appendChild(div);
             });
         }
 
@@ -1178,7 +1246,7 @@
             document.getElementById('pv-user-info').innerHTML = `<img src="${userObj.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;"><span>${userObj.name}${isVer}${isMem}</span>`;
             const mediaContainer = document.getElementById('pv-media');
             
-                        let videoMuted = post.musicUrl ? 'muted' : '';
+            let videoMuted = post.musicUrl ? 'muted' : '';
             let mediaHtml = post.mediaUrl.match(/\.(mp4|webm|mov)$/i) 
                 ? `<video src="${post.mediaUrl}" controls ${videoMuted} style="max-width:100%; max-height:50vh;"></video>` 
                 : `<img src="${post.mediaUrl}" style="max-width:100%; max-height:50vh; object-fit:contain;">`;
@@ -1210,15 +1278,14 @@
                 }, 100);
             }
 
-            
-
             document.getElementById('pv-actions').innerHTML = `<i id="pv-heart-icon" class="${isLiked ? 'fa-solid liked' : 'fa-regular'} fa-heart" style="${isLiked ? 'color:#ed4956;' : ''} cursor:pointer;" onclick="toggleModalLike('${post.id}', '${post.uid}')"></i><i class="fa-regular fa-comment" style="cursor:pointer; margin-left:15px;" onclick="openComments('${post.id}', '${post.uid}')"></i><i class="fa-regular fa-paper-plane" style="cursor:pointer; margin-left:15px;" onclick="openShareModal('${post.id}')"></i>`;
             document.getElementById('pv-likes').innerText = `${likeCount} likes`;
             document.getElementById('pv-caption').innerHTML = post.caption ? `<span>${userObj.name}</span> ${post.caption}` : '';
             
             document.getElementById('post-viewer-modal').classList.remove('hidden');
         };
-              window.togglePvAudio = () => {
+        
+        window.togglePvAudio = () => {
             const aud = document.getElementById('pv-audio');
             const btn = document.getElementById('pv-audio-btn');
             if(!aud || !btn) return;
@@ -1287,22 +1354,19 @@
                 menuIcon.style.display = 'none';
             }
 
-                         const grid = document.getElementById("profile-posts"); 
+            const grid = document.getElementById("profile-posts"); 
             grid.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
             
-            // ফায়ারবেস থেকে প্রোফাইলের নির্দিষ্ট সব পোস্ট আনা (শুধু where দিয়ে)
             const q = query(collection(db, "posts"), where("uid", "==", uid));
             
             getDocs(q).then((snap) => {
                 grid.innerHTML = '';
                 
-                // ডেটাগুলো একটি array-তে নিয়ে আসা
                 let userPosts = [];
                 snap.forEach(docSnap => {
                     userPosts.push({ id: docSnap.id, ...docSnap.data() });
                 });
                 
-                // অ্যাপের ভেতরেই পোস্টগুলোকে নতুন থেকে পুরনো অনুযায়ী সাজানো (Local Sorting)
                 userPosts.sort((a, b) => {
                     const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp || 0);
                     const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp || 0);
@@ -1317,7 +1381,6 @@
                 }
                 
                 userPosts.forEach(p => {
-                    // পোস্টটি ভিউয়ারের জন্য allPosts-এ না থাকলে সেভ করে রাখা
                     if(!allPosts.find(x => x.id === p.id)) allPosts.push(p);
                     
                     const div = document.createElement('div'); div.className = 'grid-item';
@@ -1329,7 +1392,6 @@
                 console.error(e);
                 grid.innerHTML = '<p style="text-align:center; width:100%; padding:20px; color:#8e8e8e;">No posts found.</p>'; 
             });
-         
         }
 
         window.openProfileMenu = () => document.getElementById('profile-menu-modal').classList.remove('hidden');
@@ -1338,11 +1400,7 @@
         
         window.openVerificationMenu = async () => {
             document.getElementById('profile-menu-modal').classList.add('hidden');
-            
-            // Show Adsterra Ad when opening verification menu
-            showAdsterraAdModal('Verification Center', () => {
-                checkAndShowVerificationModal();
-            });
+            checkAndShowVerificationModal();
         };
 
         async function checkAndShowVerificationModal() {
@@ -1361,23 +1419,6 @@
             if(uData.verificationStatus === 'verified') return showToast("Your account is already verified!");
 
             document.getElementById('verification-modal').classList.remove('hidden');
-        }
-
-        // Helper function for Verification Ad
-        function showAdsterraAdModal(title, callback) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay center';
-            modal.style.zIndex = '10000';
-            modal.innerHTML = `
-                <div class="modal-content" style="text-align: center;">
-                    <div class="modal-title">${title}</div>
-                    <div class="adsterra-ad-container" style="min-height: 250px; background: #fafafa; border-radius: 10px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
-                        <div id="container-2425ef7a251ef180c0d2a5d9961fab3e" style="width: 100%;"></div>
-                    </div>
-                    <button class="action-btn" style="width: 100%;" onclick="this.closest('.modal-overlay').remove(); ${callback.toString().replace(/'/g, "\\'")}()">Continue</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
         }
 
         window.applyForVerification = async () => {
@@ -1402,32 +1443,17 @@
         };
 
         // ============================================================
-        // ADMIN AUDIO & ADMIN PANEL LOGIC
+        // ADMIN PANEL UI & LOGIC
         // ============================================================
-        (function addAudioUploadToAdminPanel() {
-            const observer = new MutationObserver(() => {
-                const adminList = document.getElementById('admin-user-list');
-                if (adminList && !document.getElementById('admin-audio-upload-section')) {
-                    const audioSection = document.createElement('div');
-                    audioSection.id = 'admin-audio-upload-section';
-                    audioSection.style.cssText = `background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);`;
-                    audioSection.innerHTML = `
-                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;"><i class="fas fa-music" style="color: #0095f6;"></i> Audio Library Upload</h3>
-                        <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">এখান থেকে অডিও আপলোড করলে সেগুলো অ্যাপের মিউজিক সিলেকশন পেজে চলে যাবে।</p>
-                        <input type="text" id="admin-audio-name" placeholder="Song Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
-                        <input type="text" id="admin-audio-artist" placeholder="Artist Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
-                        <input type="file" id="admin-audio-file" accept="audio/*" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #fafafa;">
-                        <button id="admin-audio-upload-btn" class="publish-btn" style="width: 100%; padding: 12px; background: #0095f6; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;"><i class="fas fa-cloud-upload-alt"></i> Upload Audio</button>
-                        <div id="admin-audio-list" style="margin-top: 15px;"></div>
-                    `;
-                    adminList.parentNode.insertBefore(audioSection, adminList);
-                    document.getElementById('admin-audio-upload-btn').addEventListener('click', uploadAdminAudio);
-                }
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
-        })();
+        window.showAdminSection = (sec) => {
+            document.querySelectorAll('.admin-sec').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('#admin-panel-page .action-btn').forEach(btn => btn.classList.remove('primary'));
+            
+            document.getElementById('admin-sec-' + sec).style.display = 'block';
+            document.getElementById('btn-admin-' + sec).classList.add('primary');
+        };
 
-        async function uploadAdminAudio() {
+        window.uploadAdminAudio = async () => {
             const nameInput = document.getElementById('admin-audio-name');
             const artistInput = document.getElementById('admin-audio-artist');
             const fileInput = document.getElementById('admin-audio-file');
@@ -1456,7 +1482,7 @@
                 loadAdminAudioList();
             } catch (e) { console.error(e); showToast('❌ অডিও আপলোড ব্যর্থ হয়েছে'); }
             overlay.classList.add('hidden');
-        }
+        };
 
         async function loadAdminAudioList() {
             const listContainer = document.getElementById('admin-audio-list');
@@ -1481,8 +1507,10 @@
         window.loadAdminPanel = async () => {
             const list = document.getElementById('admin-user-list');
             const vList = document.getElementById('admin-verification-list');
+            const mList = document.getElementById('admin-membership-list');
             list.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
             vList.innerHTML = '';
+            mList.innerHTML = '';
             
             const querySnapshot = await getDocs(collection(db, "users"));
             list.innerHTML = '';
@@ -1492,6 +1520,7 @@
                 const uid = docSnap.id;
                 const isBlocked = u.isBlocked || false;
                 
+                // User List
                 const div = document.createElement('div');
                 div.className = 'list-item';
                 div.style.border = '1px solid #dbdbdb'; div.style.marginBottom = '10px'; div.style.borderRadius = '10px';
@@ -1510,6 +1539,7 @@
                 `;
                 list.appendChild(div);
 
+                // Verification List
                 if(u.verificationStatus === 'pending') {
                     const vDiv = document.createElement('div');
                     vDiv.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #efefef;';
@@ -1525,10 +1555,31 @@
                     `;
                     vList.appendChild(vDiv);
                 }
+
+                // Membership List
+                if(u.membershipRequest === 'pending') {
+                    const mDiv = document.createElement('div');
+                    mDiv.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #efefef;';
+                    mDiv.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${u.avatar}" style="width:40px; height:40px; border-radius:50%;">
+                            <div>
+                                <strong style="font-size:13px;">${u.name}</strong><br>
+                                <span style="font-size:11px; color:#8e8e8e;">Txn ID: ${u.paymentTxnId || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="handleMembership('${uid}', 'active')" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:12px; cursor:pointer;">Accept</button>
+                            <button onclick="handleMembership('${uid}', 'rejected')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:12px; cursor:pointer;">Reject</button>
+                        </div>
+                    `;
+                    mList.appendChild(mDiv);
+                }
             });
-            if(vList.innerHTML === '') vList.innerHTML = '<p style="font-size:12px; color:#8e8e8e;">No pending requests.</p>';
+            if(vList.innerHTML === '') vList.innerHTML = '<p style="font-size:12px; color:#8e8e8e;">No pending verification requests.</p>';
+            if(mList.innerHTML === '') mList.innerHTML = '<p style="font-size:12px; color:#8e8e8e;">No pending membership requests.</p>';
             
-            setTimeout(() => { if (document.getElementById('admin-audio-list')) { loadAdminAudioList(); } }, 500);
+            setTimeout(() => { loadAdminAudioList(); }, 500);
         };
 
         window.handleVerification = async (uid, status) => {
@@ -1536,6 +1587,15 @@
             if(status === 'rejected') updateData.verificationLastRejected = serverTimestamp();
             await updateDoc(doc(db, "users", uid), updateData);
             showToast(`Verification ${status}`); loadAdminPanel();
+        };
+
+        window.handleMembership = async (uid, status) => {
+            if(status === 'active') {
+                await updateDoc(doc(db, "users", uid), { membershipStatus: 'active', membershipRequest: 'none' });
+            } else {
+                await updateDoc(doc(db, "users", uid), { membershipRequest: 'rejected' });
+            }
+            showToast(`Membership ${status}`); loadAdminPanel();
         };
 
         window.toggleBlockUser = async (uid, currentStatus) => {
@@ -1555,18 +1615,28 @@
         }
 
         window.withdrawToZuuPay = async () => {
-            const zuuid = document.getElementById('withdraw-zuuid').value.trim();
-            if(!zuuid || zuuid.length < 5) return showToast("দয়া করে সঠিক Zuu Pay ID দিন");
             document.getElementById('global-loader').classList.remove('hidden');
             
             try {
                 const uRef = doc(db, "users", currentUser.uid);
                 const uSnap = await getDoc(uRef);
-                let bal = uSnap.data().walletBalance || 0;
+                let uData = uSnap.data();
                 
+                if(uData.membershipStatus !== 'active') {
+                    document.getElementById('global-loader').classList.add('hidden');
+                    return showToast("টাকা তোলার জন্য আপনার অ্যাক্টিভ মেম্বারশিপ থাকতে হবে!");
+                }
+                
+                let bal = uData.walletBalance || 0;
                 if(bal <= 0) {
                     document.getElementById('global-loader').classList.add('hidden');
                     return showToast("উইথড্র করার জন্য পর্যাপ্ত ব্যালেন্স নেই");
+                }
+
+                const zuuid = document.getElementById('withdraw-zuuid').value.trim();
+                if(!zuuid || zuuid.length < 5) {
+                    document.getElementById('global-loader').classList.add('hidden');
+                    return showToast("দয়া করে সঠিক Zuu Pay ID দিন");
                 }
 
                 const q = query(collection(zuuDb, "users"), where("zuuId", "==", zuuid));
@@ -1851,47 +1921,44 @@
 
                 let wBal = uData.walletBalance || 0;
 
-                    if (upType === 'post') {
+                if (upType === 'post') {
                     let pCount = (uData.postCount || 0) + 1;
                     let earned = 0;
                     
-                    // নির্দিষ্ট মাইলস্টোন অনুযায়ী আর্নিং
-                    if (pCount === 1) {
-                        earned = 2;     // প্রথম পোস্টে ২ রুপি
-                    } else if (pCount === 10) {
-                        earned = 23;    // ১০ তম পোস্টে ২৩ রুপি
-                    } else if (pCount === 50) {
-                        earned = 125;   // ৫০ তম পোস্টে ১২৫ রুপি
-                    } else if (pCount === 100) {
-                        earned = 150;   // ১০০ তম পোস্টে ১৫০ রুপি
-                    } else if (pCount === 150) {
-                        earned = 100;   // ১৫০ তম পোস্টে ১০০ রুপি
+                    if(isMember) {
+                        if (pCount === 1) earned = 2;
+                        else if (pCount === 10) earned = 23;
+                        else if (pCount === 50) earned = 125;
+                        else if (pCount === 100) earned = 150;
+                        else if (pCount === 150) earned = 100;
                     }
                     
-                    wBal += earned;
-                    await updateDoc(uRef, { postCount: pCount, walletBalance: wBal });
-                    
-                    // ইউজারকে মেসেজ দেখানো
                     if(earned > 0) {
+                        wBal += earned;
+                        await updateDoc(uRef, { postCount: pCount, walletBalance: wBal });
                         showToast(`Post Published! Milestone Bonus: ₹${earned} Added!`); 
                     } else {
-                        showToast("Post Published!");
+                        await updateDoc(uRef, { postCount: pCount });
+                        if(!isMember) showToast("Post Published! (Membership required to earn)");
+                        else showToast("Post Published!");
                     }
                 } 
-            
-                                else if (upType === 'story') {
+                else if (upType === 'story') {
                     const now = Date.now();
-                    const lastPaidTime = uData.lastPaidStoryTime || 0; // আগে স্টোরি দিয়ে টাকা পেয়েছে কিনা তা চেক
+                    const lastPaidTime = uData.lastPaidStoryTime || 0; 
 
-                    // চেক করুন শেষবার টাকা পাওয়ার পর ২৪ ঘণ্টা (২৪ * ৬০ * ৬০ * ১০০০ মিলি-সেকেন্ড) পার হয়েছে কিনা
                     if (now - lastPaidTime >= 24 * 60 * 60 * 1000) {
-                        let earned = isMember ? 3 : 2; // মেম্বার হলে ৩ টাকা, নাহলে ২ টাকা
-                        wBal += earned;
-                        // টাকা যোগ করার পাশাপাশি এখনকার সময়টা সেভ করে রাখছি
-                        await updateDoc(uRef, { walletBalance: wBal, lastPaidStoryTime: now });
-                        showToast(`Story Uploaded! Earned ₹${earned}`);
+                        let earned = isMember ? 3 : 0; 
+                        
+                        if(earned > 0) {
+                            wBal += earned;
+                            await updateDoc(uRef, { walletBalance: wBal, lastPaidStoryTime: now });
+                            showToast(`Story Uploaded! Earned ₹${earned}`);
+                        } else {
+                            await updateDoc(uRef, { lastPaidStoryTime: now });
+                            showToast("Story Uploaded! (Membership required to earn)");
+                        }
                     } else {
-                        // ২৪ ঘণ্টা পার না হলে কোনো টাকা পাবে না, শুধু স্টোরি আপলোড হবে
                         showToast("Story Uploaded Successfully!");
                     }
                 }
@@ -2087,7 +2154,6 @@
             document.getElementById('story-viewer').classList.add('hidden'); document.getElementById('story-media-container').innerHTML = ''; renderStoryBar();
         };
 
-        // Swipe logic for stories
         let touchstartX = 0, touchendX = 0;
         const storyViewerObj = document.getElementById('story-viewer');
         storyViewerObj.addEventListener('touchstart', (e) => touchstartX = e.changedTouches[0].screenX, false);
@@ -2120,20 +2186,13 @@
         };
 
     </script>
-    <!-- Adsterra Main Script (Loaded once at the end of body) -->
-<script type='text/javascript' src='//pl31362723.profitablecpmrate.com/e9/e6/b8/e9e6b83ae35589707b856fca8e327a95.js'></script>
 <script>
-    // ১. এডমিন প্যানেল মিউজিক অটো-নেম আপডেট
     document.addEventListener('change', function(e) {
-        // ফাইল ইনপুটে পরিবর্তন হলে চেক করবে
         if (e.target && e.target.id === 'admin-audio-file') {
             const file = e.target.files[0];
             if (file) {
-                // ফাইলের নামের শেষের এক্সটেনশন (.mp3 বা .wav) অংশ বাদ দেওয়া
                 const fileName = file.name.replace(/\.[^/.]+$/, ""); 
                 const nameInput = document.getElementById('admin-audio-name');
-                
-                // বক্স যদি খালি থাকে, তবেই ফাইলের নাম সেখানে অটোমেটিক বসিয়ে দেবে
                 if (nameInput && nameInput.value.trim() === '') {
                     nameInput.value = fileName; 
                 }
@@ -2141,14 +2200,11 @@
         }
     });
 
-    // ২. নরমাল লাইক বাটনের UI (User Interface) ইনস্ট্যান্ট আপডেট ফিক্স
     const patchLikeInterval = setInterval(() => {
-        // মেইন মডিউল লোড হওয়ার পর অরিজিনাল ফাংশনটি ওভাররাইট করবে
         if (typeof window.togglePostLike === 'function' && !window.togglePostLike.patched) {
             const originalTogglePostLike = window.togglePostLike;
             
             window.togglePostLike = async (postId, postOwnerUid, isLiked) => {
-                // ডাটাবেস আপডেটের আগে সাথে সাথে UI (কালার এবং কাউন্ট) আপডেট করা
                 const postWrapper = document.getElementById(`post-wrapper-${postId}`);
                 if (postWrapper) {
                     const actionDiv = postWrapper.nextElementSibling;
@@ -2158,19 +2214,14 @@
                         
                         if (heartIcon) {
                             if (isLiked) {
-                                // আনলাইক করলে
                                 heartIcon.className = 'fa-regular fa-heart';
                                 heartIcon.style.color = '';
                             } else {
-                                // লাইক করলে
                                 heartIcon.className = 'fa-solid fa-heart liked';
                                 heartIcon.style.color = '#ed4956';
-                                
-                                // ছোট্ট পপ এনিমেশন
                                 heartIcon.style.transform = 'scale(1.2)';
                                 setTimeout(() => heartIcon.style.transform = 'scale(1)', 150);
                             }
-                            // বাটনের ইভেন্ট পরের ক্লিকের জন্য আপডেট করে দেওয়া
                             heartIcon.setAttribute('onclick', `togglePostLike('${postId}', '${postOwnerUid}', ${!isLiked})`);
                         }
                         
@@ -2182,15 +2233,156 @@
                     }
                 }
                 
-                // এবার অরিজিনাল ফায়ারবেস ডাটাবেস আপডেটের ফাংশনটি কল করা
                 return originalTogglePostLike(postId, postOwnerUid, isLiked);
             };
             
-            window.togglePostLike.patched = true; // একবার ওভাররাইট হলে ইন্টারভ্যাল বন্ধ করে দেওয়া
+            window.togglePostLike.patched = true; 
             clearInterval(patchLikeInterval);
         }
     }, 300);
 </script>
+    <!-- ========================================== -->
+    <!-- NEW UPDATE SCRIPT (Paste just before </body>) -->
+    <!-- ========================================== -->
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const auth = getAuth();
+        const db = getFirestore();
+
+        // 1 & 3: মেম্বারশিপের মেয়াদ এবং কেনার আগে চেক করা
+        const originalOpenPaymentModal = window.openPaymentModal;
+        window.openPaymentModal = async (type, amount) => {
+            if (!auth.currentUser) return;
+            
+            if (type === 'membership') {
+                const uSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+                if (uSnap.exists()) {
+                    const uData = uSnap.data();
+                    const now = Date.now();
+                    
+                    if (uData.membershipStatus === 'active') {
+                        let expiry = 0;
+                        if (uData.membershipExpiry) {
+                            expiry = uData.membershipExpiry.toMillis ? uData.membershipExpiry.toMillis() : new Date(uData.membershipExpiry).getTime();
+                        }
+                        
+                        // যদি মেয়াদ শেষ না হয়ে থাকে
+                        if (expiry === 0 || now < expiry) {
+                            window.showToast("আপনার মেম্বারশিপ ইতিমধ্যেই অ্যাক্টিভ আছে!");
+                            document.getElementById('profile-menu-modal').classList.add('hidden');
+                            return;
+                        } else {
+                            // মেয়াদ শেষ হয়ে গেলে স্ট্যাটাস আপডেট করে পুনরায় কেনার সুযোগ দেবে
+                            await updateDoc(doc(db, "users", auth.currentUser.uid), { membershipStatus: 'expired' });
+                        }
+                    } else if (uData.membershipRequest === 'pending') {
+                        window.showToast("আপনার মেম্বারশিপ রিকোয়েস্ট পেন্ডিং আছে, অনুগ্রহ করে অপেক্ষা করুন।");
+                        document.getElementById('profile-menu-modal').classList.add('hidden');
+                        return;
+                    }
+                }
+            }
+            
+            // যদি সব ঠিক থাকে তবে অরিজিনাল পেমেন্ট মডাল ওপেন হবে
+            if (originalOpenPaymentModal) {
+                originalOpenPaymentModal(type, amount);
+            }
+        };
+
+        // 1: এডমিন প্যানেল থেকে মেম্বারশিপ অ্যাক্টিভ করার সময় ৩০ দিনের লিমিট সেট করা
+        const originalHandleMembership = window.handleMembership;
+        window.handleMembership = async (uid, status) => {
+            if(status === 'active') {
+                // ৩০ দিন = 30 দিন * 24 ঘন্টা * 60 মিনিট * 60 সেকেন্ড * 1000 মিলিসেকেন্ড
+                const expiryTimestamp = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+                await updateDoc(doc(db, "users", uid), { 
+                    membershipStatus: 'active', 
+                    membershipRequest: 'none',
+                    membershipExpiry: expiryTimestamp
+                });
+                window.showToast("Membership activated for 1 Month!");
+                if(window.loadAdminPanel) window.loadAdminPanel();
+            } else {
+                if(originalHandleMembership) originalHandleMembership(uid, status);
+            }
+        };
+
+        // 2: ব্লু টিক লিডারবোর্ড আপডেট (যাদের ভেরিফাই টিক আছে তাদের লাইভ দেখানোর জন্য)
+        window.switchLeaderboard = async (type) => {
+            if(type === 'normal') {
+                document.getElementById('btn-lb-normal').classList.add('primary');
+                document.getElementById('btn-lb-blue').classList.remove('primary');
+                document.getElementById('lb-rules-text').innerText = "Rules: মেম্বারশিপ নেওয়া ইউজারদের র‍্যাংকিং। ৩ মাস বা মোট ৩ বার ১ম হলে অটো ব্লু টিক!";
+            } else {
+                document.getElementById('btn-lb-blue').classList.add('primary');
+                document.getElementById('btn-lb-normal').classList.remove('primary');
+                document.getElementById('lb-rules-text').innerText = "Rules: ব্লু টিক ভেরিফাইড ইউজারদের র‍্যাংকিং। মাসে ১ম স্থানে থাকলে ৫০০ টাকা পুরস্কার।";
+            }
+            
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
+            
+            try {
+                // ডাটাবেস থেকে ফ্রেশ ডেটা আনা যাতে সাথে সাথে ব্লুটিক আপডেট দেখা যায়
+                const snap = await getDocs(collection(db, "users"));
+                let freshUsers = [];
+                snap.forEach(d => freshUsers.push({ id: d.id, ...d.data() }));
+                
+                let filtered = freshUsers.filter(u => auth.currentUser && u.uid !== auth.currentUser.uid);
+                
+                if(type === 'normal') {
+                    // শুধুমাত্র যাদের একটিভ মেম্বারশিপ আছে তাদের নরমাল লিডারবোর্ডে দেখাবে
+                    filtered = filtered.filter(u => {
+                        const expiry = u.membershipExpiry ? (u.membershipExpiry.toMillis ? u.membershipExpiry.toMillis() : new Date(u.membershipExpiry).getTime()) : 0;
+                        const isActive = u.membershipStatus === 'active' && (expiry === 0 || Date.now() < expiry);
+                        return isActive && u.verificationStatus !== 'verified';
+                    });
+                } else {
+                    // শুধুমাত্র ব্লু টিক ভেরিফাইড ইউজারদের দেখাবে
+                    filtered = filtered.filter(u => u.verificationStatus === 'verified');
+                }
+                
+                // Score calculation: 1 post = 10 points, 1 follower = 5 points
+                filtered.sort((a, b) => {
+                    const sA = (a.postCount || 0) * 10 + (a.followers || []).length * 5;
+                    const sB = (b.postCount || 0) * 10 + (b.followers || []).length * 5;
+                    return sB - sA; 
+                });
+                
+                list.innerHTML = '';
+                if(filtered.length === 0) {
+                    list.innerHTML = '<p style="text-align:center; padding: 20px; color:#8e8e8e;">কোনো ইউজার পাওয়া যায়নি।</p>';
+                    return;
+                }
+                
+                filtered.forEach((u, index) => {
+                    const score = (u.postCount || 0) * 10 + (u.followers || []).length * 5;
+                    const div = document.createElement('div');
+                    div.className = 'list-item';
+                    div.onclick = () => { if(window.viewProfile) window.viewProfile(u.uid); };
+                    let rankColor = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? '#cd7f32' : '#8e8e8e';
+                    
+                    // ভেরিফাইড ইউজার হলে নামের পাশে টিক মার্ক শো করবে
+                    const vTick = u.verificationStatus === 'verified' ? '<i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:12px; margin-left:5px;"></i>' : '';
+
+                    div.innerHTML = `
+                        <div style="width: 30px; font-weight: bold; color: ${rankColor}; font-size: 16px;">#${index + 1}</div>
+                        <img src="${u.avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                        <div class="list-item-content">
+                            <strong>${u.name} ${vTick}</strong>
+                            <span style="font-size: 11px;">Score: ${score}</span>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p style="text-align:center; padding: 20px; color:#dc3545;">Failed to load leaderboard.</p>';
+            }
+        };
+    </script>
 
 </body>
 </html>
