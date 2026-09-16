@@ -2383,6 +2383,171 @@
             }
         };
     </script>
+    <!-- ========================================== -->
+    <!-- NEW FIXES & UPDATES (Paste just before </body>) -->
+    <!-- ========================================== -->
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const auth = getAuth();
+        const db = getFirestore();
+
+        // 1. Follow / Unfollow Instant UI Fix
+        const originalToggleFollow = window.toggleFollow;
+        window.toggleFollow = async (targetUid, isFollowing) => {
+            if(!auth.currentUser) return;
+            
+            // ইনস্ট্যান্ট UI আপডেট যাতে ফলো বাটন সাথে সাথে কাজ করে
+            const btn = document.querySelector('.profile-actions .action-btn');
+            if (btn && (btn.innerText === 'Follow' || btn.innerText === 'Following')) {
+                if (isFollowing) {
+                    btn.innerText = 'Follow';
+                    btn.classList.add('primary');
+                } else {
+                    btn.innerText = 'Following';
+                    btn.classList.remove('primary');
+                }
+                // পরের ক্লিকের জন্য ইভেন্ট আপডেট করা
+                btn.setAttribute('onclick', `toggleFollow('${targetUid}', ${!isFollowing})`);
+                
+                // ফলোয়ার সংখ্যা সাথে সাথে কমানো বা বাড়ানো
+                const followersStat = document.getElementById("stat-followers");
+                if (followersStat) {
+                    let currentCount = parseInt(followersStat.innerText) || 0;
+                    followersStat.innerText = isFollowing ? Math.max(0, currentCount - 1) : currentCount + 1;
+                }
+            }
+            
+            // ব্যাকএন্ড আপডেট
+            if (originalToggleFollow) {
+                await originalToggleFollow(targetUid, isFollowing);
+            }
+        };
+
+        // 2. Add New Membership Plans (30, 10, 7, 4 Days)
+        setTimeout(() => {
+            const menuModal = document.getElementById('profile-menu-modal');
+            if(menuModal) {
+                const content = menuModal.querySelector('.modal-content');
+                
+                // আগের পুরানো মেম্বারশিপ বাটনটি ডিলিট করে দেওয়া
+                const oldBtns = content.querySelectorAll('button');
+                oldBtns.forEach(btn => {
+                    if(btn.innerText.includes('Buy Membership')) btn.remove();
+                });
+                
+                // নতুন প্ল্যানগুলোর লিস্ট
+                const plans = [
+                    { price: 99, days: 30, text: '30 Days' },
+                    { price: 35, days: 10, text: '10 Days' },
+                    { price: 25, days: 7, text: '7 Days' },
+                    { price: 15, days: 4, text: '4 Days' }
+                ];
+                
+                let planHtml = '';
+                plans.forEach(p => {
+                    planHtml += `<button class="modal-option-btn" onclick="openPaymentModal('membership', ${p.price}, ${p.days})"><i class="fa-solid fa-crown" style="width:20px; color:gold;"></i> Membership - ₹${p.price} (${p.text})</button>`;
+                });
+                
+                const title = content.querySelector('.modal-title');
+                if(title) title.insertAdjacentHTML('afterend', planHtml);
+            }
+        }, 1000);
+
+        // 3. Payment Modal Update & Check Active Membership
+        window.openPaymentModal = async (type, amount, days = 30) => {
+            if (!auth.currentUser) return;
+            
+            window.paymentTypeContext = type;
+            window.selectedPlanDays = days; // কতদিনের প্ল্যান তা সেভ করা
+            
+            if (type === 'membership') {
+                const uSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+                if (uSnap.exists()) {
+                    const uData = uSnap.data();
+                    const now = Date.now();
+                    
+                    if (uData.membershipStatus === 'active') {
+                        let expiry = 0;
+                        if (uData.membershipExpiry) {
+                            expiry = uData.membershipExpiry.toMillis ? uData.membershipExpiry.toMillis() : new Date(uData.membershipExpiry).getTime();
+                        }
+                        
+                        // যদি মেম্বারশিপ নেওয়া থাকে এবং মেয়াদ থাকে
+                        if (expiry === 0 || now < expiry) {
+                            window.showToast(`আপনার মেম্বারশিপ ইতিমধ্যেই অ্যাক্টিভ আছে!`);
+                            document.getElementById('profile-menu-modal').classList.add('hidden');
+                            return;
+                        } else {
+                            // মেয়াদ শেষ হয়ে গেলে স্ট্যাটাস এক্সপায়ার করে দেওয়া
+                            await updateDoc(doc(db, "users", auth.currentUser.uid), { membershipStatus: 'expired' });
+                        }
+                    } else if (uData.membershipRequest === 'pending') {
+                        window.showToast("আপনার মেম্বারশিপ রিকোয়েস্ট পেন্ডিং আছে, অনুগ্রহ করে অপেক্ষা করুন।");
+                        document.getElementById('profile-menu-modal').classList.add('hidden');
+                        return;
+                    }
+                }
+            }
+            
+            // ওপেন মডাল
+            document.getElementById('profile-menu-modal').classList.add('hidden');
+            document.getElementById('verification-modal').classList.add('hidden');
+            document.getElementById('payment-title').innerHTML = type === 'membership' ? `<i class="fa-solid fa-crown"></i> Get Membership (${days} Days)` : '<i class="fa-solid fa-certificate"></i> Get Verified';
+            document.getElementById('payment-amount').innerText = `₹${amount}`;
+            document.getElementById('payment-txn-id').value = '';
+            document.getElementById('payment-modal').classList.remove('hidden');
+        };
+
+        // 4. Save Requested Days on Payment Submit
+        window.submitPayment = async () => {
+            const txnId = document.getElementById('payment-txn-id').value.trim();
+            if (txnId.length < 10) return window.showToast("Enter a valid UPI Transaction ID");
+            
+            if (window.paymentTypeContext === 'membership') {
+                await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                    membershipRequest: 'pending',
+                    paymentTxnId: txnId,
+                    requestedMembershipDays: window.selectedPlanDays || 30
+                });
+            } else if (window.paymentTypeContext === 'verification') {
+                await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                    verificationStatus: 'pending',
+                    paymentTxnId: txnId
+                });
+            }
+            
+            window.showToast("Payment submitted to Admin for manual review!");
+            document.getElementById('payment-modal').classList.add('hidden');
+        };
+
+        // 5. Admin Panel: Dynamic Days Approval
+        window.handleMembership = async (uid, status) => {
+            if(status === 'active') {
+                const uSnap = await getDoc(doc(db, "users", uid));
+                let days = 30; // ডিফল্ট ৩০ দিন
+                if(uSnap.exists() && uSnap.data().requestedMembershipDays) {
+                    days = uSnap.data().requestedMembershipDays;
+                }
+                
+                // ইউজার যে প্ল্যান কিনেছে, সেই অনুযায়ী মেয়াদ সেট করা
+                const expiryTimestamp = new Date(Date.now() + (days * 24 * 60 * 60 * 1000));
+                await updateDoc(doc(db, "users", uid), { 
+                    membershipStatus: 'active', 
+                    membershipRequest: 'none',
+                    membershipExpiry: expiryTimestamp,
+                    requestedMembershipDays: null // রিকুয়েস্ট ক্লিয়ার করে দেওয়া
+                });
+                window.showToast(`Membership activated for ${days} Days!`);
+                if(window.loadAdminPanel) window.loadAdminPanel();
+            } else {
+                await updateDoc(doc(db, "users", uid), { membershipRequest: 'rejected' });
+                window.showToast("Membership rejected");
+                if(window.loadAdminPanel) window.loadAdminPanel();
+            }
+        };
+    </script>
 
 </body>
 </html>
