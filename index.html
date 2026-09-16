@@ -486,18 +486,30 @@
                 <button class="withdraw-btn" onclick="withdrawToZuuPay()">Withdraw Now</button>
             </div>
             
-            <div class="milestone-box">
+                        <div class="milestone-box">
                 <h4 style="margin-bottom: 12px; color: #262626; font-size: 1.1rem;"><i class="fa-solid fa-image" style="color:#0095f6;"></i> Post Milestones</h4>
-                <p style="font-size: 12px; color: #8e8e8e;">(সর্বোচ্চ 100 টি পোস্ট পর্যন্ত মোট 400 টাকা পাবেন)</p>
-                <div style="background: #efefef; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center;">
+                
+                <div style="background: #fafafa; border: 1px solid #efefef; border-radius: 8px; padding: 10px 15px; margin-bottom: 15px;">
+                    <ul style="list-style: none; padding: 0; font-size: 13px; color: #262626;">
+                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #dbdbdb;"><span>1st post</span> <span style="font-weight: 600; color: #28a745;">+ ₹2</span></li>
+                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #dbdbdb;"><span>10th post</span> <span style="font-weight: 600; color: #28a745;">+ ₹23</span></li>
+                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #dbdbdb;"><span>50th post</span> <span style="font-weight: 600; color: #28a745;">+ ₹125</span></li>
+                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #dbdbdb;"><span>100th post</span> <span style="font-weight: 600; color: #28a745;">+ ₹150</span></li>
+                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #dbdbdb;"><span>150th post</span> <span style="font-weight: 600; color: #28a745;">+ ₹100</span></li>
+                        <li style="display: flex; justify-content: space-between; padding-top: 10px; font-weight: 700; font-size: 14px;"><span>Total</span> <span style="color: #0095f6;">₹400</span></li>
+                    </ul>
+                </div>
+
+                <div style="background: #efefef; padding: 10px; border-radius: 8px; text-align: center;">
                     <p style="font-size: 13px; color: #262626; font-weight: 600;" id="post-progress-text">Your Total Posts: 0</p>
                 </div>
             </div>
 
-            <div class="milestone-box">
+
+                    <div class="milestone-box">
                 <h4 style="margin-bottom: 10px; color: #262626; font-size: 1.1rem;"><i class="fa-solid fa-circle-notch" style="color:#e1306c;"></i> Story Upload Earnings</h4>
                 <p style="font-size: 12.5px; color: #8e8e8e; margin-bottom: 15px; line-height: 1.5;">
-                    প্রতিদিন স্টোরি আপলোড করলে <strong>₹২</strong> পাবেন। (মেম্বারশিপ থাকলে <strong>₹৩</strong> পাবেন)। 
+                    প্রথম স্টোরি আপলোড করলে <strong>₹২</strong> পাবেন (মেম্বারশিপ থাকলে <strong>₹৩</strong>)। আনলিমিটেড স্টোরি আপলোড করলেও টাকা শুধু একবার পাবেন এবং পুনরায় স্টোরির টাকা পেতে ঠিক <strong>২৪ ঘণ্টা</strong> অপেক্ষা করতে হবে।
                 </p>
             </div>
         </div>
@@ -626,7 +638,7 @@
             </div>
             <div class="story-bottom-bar" id="story-bottom-bar"></div>
         </div>
-    </div>
+    </>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -1839,20 +1851,51 @@
 
                 let wBal = uData.walletBalance || 0;
 
-                if (upType === 'post') {
+                    if (upType === 'post') {
                     let pCount = (uData.postCount || 0) + 1;
                     let earned = 0;
-                    if(pCount <= 100) { earned = 4; } 
+                    
+                    // নির্দিষ্ট মাইলস্টোন অনুযায়ী আর্নিং
+                    if (pCount === 1) {
+                        earned = 2;     // প্রথম পোস্টে ২ রুপি
+                    } else if (pCount === 10) {
+                        earned = 23;    // ১০ তম পোস্টে ২৩ রুপি
+                    } else if (pCount === 50) {
+                        earned = 125;   // ৫০ তম পোস্টে ১২৫ রুপি
+                    } else if (pCount === 100) {
+                        earned = 150;   // ১০০ তম পোস্টে ১৫০ রুপি
+                    } else if (pCount === 150) {
+                        earned = 100;   // ১৫০ তম পোস্টে ১০০ রুপি
+                    }
+                    
                     wBal += earned;
                     await updateDoc(uRef, { postCount: pCount, walletBalance: wBal });
-                    if(earned > 0) showToast(`Post Published! Earned ₹${earned}`); else showToast("Post Published!");
+                    
+                    // ইউজারকে মেসেজ দেখানো
+                    if(earned > 0) {
+                        showToast(`Post Published! Milestone Bonus: ₹${earned} Added!`); 
+                    } else {
+                        showToast("Post Published!");
+                    }
                 } 
-                else if (upType === 'story') {
-                    let earned = isMember ? 3 : 2;
-                    wBal += earned;
-                    await updateDoc(uRef, { walletBalance: wBal });
-                    showToast(`Story Uploaded! Earned ₹${earned}`);
+            
+                                else if (upType === 'story') {
+                    const now = Date.now();
+                    const lastPaidTime = uData.lastPaidStoryTime || 0; // আগে স্টোরি দিয়ে টাকা পেয়েছে কিনা তা চেক
+
+                    // চেক করুন শেষবার টাকা পাওয়ার পর ২৪ ঘণ্টা (২৪ * ৬০ * ৬০ * ১০০০ মিলি-সেকেন্ড) পার হয়েছে কিনা
+                    if (now - lastPaidTime >= 24 * 60 * 60 * 1000) {
+                        let earned = isMember ? 3 : 2; // মেম্বার হলে ৩ টাকা, নাহলে ২ টাকা
+                        wBal += earned;
+                        // টাকা যোগ করার পাশাপাশি এখনকার সময়টা সেভ করে রাখছি
+                        await updateDoc(uRef, { walletBalance: wBal, lastPaidStoryTime: now });
+                        showToast(`Story Uploaded! Earned ₹${earned}`);
+                    } else {
+                        // ২৪ ঘণ্টা পার না হলে কোনো টাকা পাবে না, শুধু স্টোরি আপলোড হবে
+                        showToast("Story Uploaded Successfully!");
+                    }
                 }
+
             } catch (e) { showToast("Upload failed."); }
             
             overlay.classList.add('hidden'); selFile = null;
