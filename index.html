@@ -2122,6 +2122,75 @@
     </script>
     <!-- Adsterra Main Script (Loaded once at the end of body) -->
 <script type='text/javascript' src='//pl31362723.profitablecpmrate.com/e9/e6/b8/e9e6b83ae35589707b856fca8e327a95.js'></script>
+<script>
+    // ১. এডমিন প্যানেল মিউজিক অটো-নেম আপডেট
+    document.addEventListener('change', function(e) {
+        // ফাইল ইনপুটে পরিবর্তন হলে চেক করবে
+        if (e.target && e.target.id === 'admin-audio-file') {
+            const file = e.target.files[0];
+            if (file) {
+                // ফাইলের নামের শেষের এক্সটেনশন (.mp3 বা .wav) অংশ বাদ দেওয়া
+                const fileName = file.name.replace(/\.[^/.]+$/, ""); 
+                const nameInput = document.getElementById('admin-audio-name');
+                
+                // বক্স যদি খালি থাকে, তবেই ফাইলের নাম সেখানে অটোমেটিক বসিয়ে দেবে
+                if (nameInput && nameInput.value.trim() === '') {
+                    nameInput.value = fileName; 
+                }
+            }
+        }
+    });
+
+    // ২. নরমাল লাইক বাটনের UI (User Interface) ইনস্ট্যান্ট আপডেট ফিক্স
+    const patchLikeInterval = setInterval(() => {
+        // মেইন মডিউল লোড হওয়ার পর অরিজিনাল ফাংশনটি ওভাররাইট করবে
+        if (typeof window.togglePostLike === 'function' && !window.togglePostLike.patched) {
+            const originalTogglePostLike = window.togglePostLike;
+            
+            window.togglePostLike = async (postId, postOwnerUid, isLiked) => {
+                // ডাটাবেস আপডেটের আগে সাথে সাথে UI (কালার এবং কাউন্ট) আপডেট করা
+                const postWrapper = document.getElementById(`post-wrapper-${postId}`);
+                if (postWrapper) {
+                    const actionDiv = postWrapper.nextElementSibling;
+                    if (actionDiv && actionDiv.classList.contains('post-actions')) {
+                        const heartIcon = actionDiv.querySelector('.fa-heart');
+                        const likesDiv = actionDiv.nextElementSibling;
+                        
+                        if (heartIcon) {
+                            if (isLiked) {
+                                // আনলাইক করলে
+                                heartIcon.className = 'fa-regular fa-heart';
+                                heartIcon.style.color = '';
+                            } else {
+                                // লাইক করলে
+                                heartIcon.className = 'fa-solid fa-heart liked';
+                                heartIcon.style.color = '#ed4956';
+                                
+                                // ছোট্ট পপ এনিমেশন
+                                heartIcon.style.transform = 'scale(1.2)';
+                                setTimeout(() => heartIcon.style.transform = 'scale(1)', 150);
+                            }
+                            // বাটনের ইভেন্ট পরের ক্লিকের জন্য আপডেট করে দেওয়া
+                            heartIcon.setAttribute('onclick', `togglePostLike('${postId}', '${postOwnerUid}', ${!isLiked})`);
+                        }
+                        
+                        if (likesDiv && likesDiv.classList.contains('post-likes')) {
+                            let currentLikes = parseInt(likesDiv.innerText.replace(/[^0-9]/g, '')) || 0;
+                            let newLikes = isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1;
+                            likesDiv.innerText = `${newLikes} likes`;
+                        }
+                    }
+                }
+                
+                // এবার অরিজিনাল ফায়ারবেস ডাটাবেস আপডেটের ফাংশনটি কল করা
+                return originalTogglePostLike(postId, postOwnerUid, isLiked);
+            };
+            
+            window.togglePostLike.patched = true; // একবার ওভাররাইট হলে ইন্টারভ্যাল বন্ধ করে দেওয়া
+            clearInterval(patchLikeInterval);
+        }
+    }, 300);
+</script>
 
 </body>
 </html>
