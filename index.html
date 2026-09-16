@@ -6,6 +6,7 @@
     <title>Insta Story</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: #fafafa; color: #262626; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
@@ -81,7 +82,7 @@
         .story-ring.viewed { background: #dbdbdb; animation: none; box-shadow: none; }
         .story-ring.viewed img { border-color: #dbdbdb; opacity: 0.6; }
 
-        /* Home Feed */
+        /* Home Feed & Ads */
         .feed-container { background: #fafafa; }
         .feed-story-ring { width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; padding: 2px; }
         .feed-story-ring.has-story { background: linear-gradient(45deg, #f9b700, #f9b700, #f9b700); animation: goldPulse 1.5s infinite; }
@@ -192,7 +193,6 @@
         .story-media-container { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
         .story-media-container img, .story-media-container video { max-width: 100%; max-height: 100vh; object-fit: contain; animation: storyFadeIn 0.3s ease-in-out; }
         @keyframes storyFadeIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
-        /* Tap zones are kept for clicks, but swipe is added via JS */
         .tap-zone { position: absolute; top: 0; height: 100%; width: 50%; z-index: 5; }
         .tap-zone.left { left: 0; }
         .tap-zone.right { right: 0; }
@@ -229,8 +229,13 @@
         .audio-toggle-btn { position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
         .audio-toggle-btn.playing { background: rgba(0, 149, 246, 0.8); }
 
-        /* Verfication notice */
+        /* Verfication notice & Member Badge */
         .verification-notice { background: rgba(220, 53, 69, 0.1); border-left: 3px solid #dc3545; padding: 10px; margin-bottom: 15px; font-size: 12px; color: #dc3545; display: none; }
+        .member-badge { background: linear-gradient(45deg, #f9b700, #ff5722); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 5px; vertical-align: middle;}
+        
+        /* Adsterra Ad Container Styling */
+        .adsterra-ad-container { display: flex; justify-content: center; align-items: center; overflow: hidden; background: #fff; padding: 10px 0; border-bottom: 1px solid #dbdbdb; }
+        .adsterra-ad-container div { display: flex; justify-content: center; width: 100%; }
     </style>
 </head>
 <body>
@@ -285,19 +290,13 @@
             <div class="feed-container" id="home-feed"></div>
         </div>
         
-        <!-- REELS PAGE (UPDATED) -->
+        <!-- REELS PAGE -->
         <div id="reels-page" class="page" style="height: 100vh; overflow: hidden; background: #000; position: relative;">
-            
-            <!-- Top bar (Insta Story) -->
             <div class="top-bar" style="background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); border-bottom: none; position: absolute; top:0; left:0; width: 100%; z-index: 10; height: 60px; display: flex; align-items: center; justify-content: center; padding: 0 15px;">
-                
-                <!-- Left: Back Button & Title -->
                 <div style="position: absolute; left: 15px; display: flex; align-items: center;">
                     <i class="fa-solid fa-arrow-left header-icon" style="color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8);" onclick="navigateTo('home')"></i>
                     <h2 style="font-size: 1.2rem; margin-left:15px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">Reels</h2>
                 </div>
-                
-                <!-- Center Fake Tabs: Following | For You -->
                 <div style="display: flex; gap: 15px; font-weight: 600; font-size: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
                     <span style="color: rgba(255,255,255,0.6);">Following</span>
                     <span style="color: #fff; position: relative;">
@@ -305,21 +304,14 @@
                         <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 25px; height: 2px; background: #fff; border-radius: 2px;"></div>
                     </span>
                 </div>
-
             </div>
-            
-            <!-- Iframe Cropping Wrapper -->
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden;">
-                <!-- Negative margin (-70px) & extra height (+140px) to hide top/bottom navs of Pikko Shorts -->
                 <iframe id="reels-iframe" src="https://sudiptak503-maker.github.io/pikko-shorts/" 
                     style="width: 100%; height: calc(100vh + 140px); border: none; position: absolute; top: -70px; left: 0;" 
                     allow="autoplay; encrypted-media" allowfullscreen>
                 </iframe>
-                
-                <!-- Invisible Overlay to block clicks on Profile Name and Follow Button (Bottom Left) -->
                 <div style="position: absolute; bottom: 0; left: 0; width: 70%; height: 150px; z-index: 5; background: transparent;"></div>
             </div>
-            
         </div>
 
         <div id="explore-page" class="page">
@@ -364,7 +356,6 @@
         <div id="profile-page" class="page">
             <div class="top-bar">
                 <h2 id="profile-top-name" style="font-family: 'Poppins', sans-serif; font-size: 1.2rem;">Profile</h2>
-                <!-- Profile Menu Icon -->
                 <i class="fa-solid fa-bars header-icon" id="profile-menu-icon" style="display:none;" onclick="openProfileMenu()"></i>
             </div>
             <div class="profile-header">
@@ -397,10 +388,34 @@
         <div id="profile-menu-modal" class="modal-overlay hidden" onclick="closeModals(event)">
             <div class="modal-content" onclick="event.stopPropagation()">
                 <div class="modal-title">Menu</div>
+                <button class="modal-option-btn" onclick="openPaymentModal('membership', 99)"><i class="fa-solid fa-crown" style="width:20px; color:gold;"></i> Buy Membership (₹99/mo)</button>
                 <button class="modal-option-btn" onclick="openAboutApp()"><i class="fa-solid fa-circle-info" style="width:20px;"></i> About App</button>
                 <button class="modal-option-btn" onclick="openPrivacyPolicy()"><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Privacy Policy</button>
-                <button class="modal-option-btn" onclick="showToast('Settings (Coming Soon)')"><i class="fa-solid fa-gear" style="width:20px;"></i> Settings (Coming Soon)</button>
                 <button class="modal-option-btn" onclick="openVerificationMenu()"><i class="fa-solid fa-certificate" style="width:20px;"></i> Verification</button>
+            </div>
+        </div>
+
+        <!-- Virtual Payment Modal (UPI Submission) -->
+        <div id="payment-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-title" id="payment-title" style="color:#0095f6;"><i class="fa-solid fa-credit-card"></i> Payment Checkout</div>
+                <p style="font-size: 13px; color: #8e8e8e; margin-bottom: 15px;" id="payment-desc">Please complete your payment to proceed.</p>
+                
+                <div style="background: #fafafa; border: 1px solid #dbdbdb; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="margin-bottom: 10px; font-size: 14px;">Scan or Copy UPI ID</h4>
+                    <div style="width: 120px; height: 120px; background: #e0e0e0; margin: 0 auto 10px auto; display: flex; justify-content: center; align-items: center; border-radius: 8px;">
+                        <i class="fa-solid fa-qrcode" style="font-size: 50px; color: #aaa;"></i>
+                    </div>
+                    <div style="font-weight: bold; font-size: 16px; color: #000;">8391921082@ibl</div>
+                    <div style="font-size: 12px; color: #ed4956; margin-top: 5px;">Amount to Pay: <span id="payment-amount">₹99</span></div>
+                </div>
+
+                <div class="edit-field">
+                    <label>Enter UPI Transaction ID (12 Digits)</label>
+                    <input type="text" id="payment-txn-id" placeholder="e.g. 3245XXXXXXXX" maxlength="12">
+                </div>
+                
+                <button class="publish-btn" onclick="submitPayment()">Submit Payment</button>
             </div>
         </div>
 
@@ -408,26 +423,26 @@
         <div id="verification-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
             <div class="modal-content" onclick="event.stopPropagation()">
                 <div class="modal-title" style="color:#0095f6;"><i class="fa-solid fa-circle-check"></i> Get Verified</div>
-                <div id="verification-notice" class="verification-notice">আপনার প্রোফাইলে কিছু সমস্যার কারণে ভেরিফিকেশন ব্যাচটি দেওয়া সম্ভব হয়নি। 90 দিন পর পুনরায় চেষ্টা করুন।</div>
-                <p style="font-size: 13px; color: #8e8e8e; margin-bottom: 15px;">ভেরিফিকেশন ব্যাজ পেতে আপনার ১০০০+ ফলোয়ার প্রয়োজন। যদি আপনার ফলোয়ার না থাকে, তবে ৯০০ টাকা মান্থলি মেম্বারশিপের মাধ্যমে ব্লুটুথ ভেরিফিকেশন নিতে পারেন।</p>
-                <button class="publish-btn" style="margin-bottom: 10px;" onclick="applyForVerification()">Apply for Verification</button>
+                <div id="verification-notice" class="verification-notice">আপনার প্রোফাইলে কিছু সমস্যার কারণে ভেরিফিকেশন ব্যাচটি দেওয়া সম্ভব হয়নি। 90 দিন পর পুনরায় চেষ্টা করুন।</div>
+                <p style="font-size: 13px; color: #8e8e8e; margin-bottom: 15px;">ভেরিফিকেশন ব্যাজ পেতে আপনার ১০০+ ফলোয়ার প্রয়োজন। যদি আপনার ফলোয়ার না থাকে, তবে ৮৯৯ টাকা পে করে লাইফটাইম ব্লুটুথ ভেরিফিকেশন নিতে পারেন।</p>
+                <button class="publish-btn" style="margin-bottom: 10px;" onclick="applyForVerification()">Apply for Free Verification</button>
+                <button class="action-btn" style="width: 100%; margin-bottom: 10px;" onclick="openPaymentModal('verification', 899)">Pay ₹899 for Verification</button>
             </div>
         </div>
 
-        <!-- About App Modal -->
+        <!-- About & Privacy Modals -->
         <div id="about-app-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
             <div class="modal-content" onclick="event.stopPropagation()" style="text-align: left;">
                 <div class="modal-title">About App</div>
-                <p style="font-size: 13px; color: #262626; margin-bottom: 10px;"><strong>Insta Story</strong> is a social media application designed to share photos, stories, and connect with people. <br><br>ইন্সটা স্টোরি হলো একটি সোশ্যাল মিডিয়া অ্যাপ্লিকেশন যা ছবি, স্টোরি শেয়ার করা এবং মানুষের সাথে যুক্ত হওয়ার জন্য ডিজাইন করা হয়েছে।</p>
+                <p style="font-size: 13px; color: #262626; margin-bottom: 10px;"><strong>Insta Story</strong> is a social media application designed to share photos, stories, and connect with people.</p>
                 <button class="action-btn" style="width: 100%; margin-top: 10px;" onclick="closeModals()">Close</button>
             </div>
         </div>
 
-        <!-- Privacy Policy Modal -->
         <div id="privacy-policy-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
             <div class="modal-content" onclick="event.stopPropagation()" style="text-align: left;">
                 <div class="modal-title">Privacy Policy</div>
-                <p style="font-size: 13px; color: #262626; margin-bottom: 10px;">Your privacy is our priority. We do not sell your personal data to third parties. Uploaded media is securely stored and only visible based on your interaction settings.<br><br>আপনার প্রাইভেসি আমাদের কাছে গুরুত্বপূর্ণ। আমরা আপনার ডেটা কোনো থার্ড পার্টির কাছে বিক্রি করি না।</p>
+                <p style="font-size: 13px; color: #262626; margin-bottom: 10px;">Your privacy is our priority. We do not sell your personal data to third parties. Uploaded media is securely stored.</p>
                 <button class="action-btn" style="width: 100%; margin-top: 10px;" onclick="closeModals()">Close</button>
             </div>
         </div>
@@ -444,9 +459,7 @@
                 <div id="admin-verification-list"></div>
             </div>
 
-            <div class="list-container" id="admin-user-list" style="padding: 15px;">
-                <!-- ইউজার লিস্ট এখানে লোড হবে -->
-            </div>
+            <div class="list-container" id="admin-user-list" style="padding: 15px;"></div>
         </div>
 
         <div id="creator-hub-page" class="page" style="background: #fafafa;">
@@ -459,6 +472,11 @@
                 <p style="font-size: 13px; opacity: 0.9;">Upload Posts & Stories to Earn Real Cash Instantly!</p>
             </div>
             
+            <!-- Creator Hub Adsterra Ad -->
+            <div class="adsterra-ad-container" style="background: #fafafa; border: none; padding: 15px;">
+                <div id="container-2425ef7a251ef180c0d2a5d9961fab3e" style="width: 100%; min-height: 250px;"></div>
+            </div>
+
             <div class="wallet-card">
                 <h4 style="color: #aaa; font-weight: 500;">Available Earnings</h4>
                 <h1 id="creator-wallet-bal">₹0</h1>
@@ -469,27 +487,17 @@
             
             <div class="milestone-box">
                 <h4 style="margin-bottom: 12px; color: #262626; font-size: 1.1rem;"><i class="fa-solid fa-image" style="color:#0095f6;"></i> Post Milestones</h4>
-                <div class="milestone-item"><span>1 Post Upload</span> <strong style="color: #00e676;">₹2</strong></div>
-                <div class="milestone-item"><span>10 Posts Upload</span> <strong style="color: #00e676;">₹25</strong></div>
-                <div class="milestone-item"><span>50 Posts Upload</span> <strong style="color: #00e676;">₹200</strong></div>
-                <div class="milestone-item"><span>100 Posts Upload</span> <strong style="color: #00e676;">₹400</strong></div>
+                <p style="font-size: 12px; color: #8e8e8e;">(সর্বোচ্চ 100 টি পোস্ট পর্যন্ত মোট 400 টাকা পাবেন)</p>
                 <div style="background: #efefef; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center;">
                     <p style="font-size: 13px; color: #262626; font-weight: 600;" id="post-progress-text">Your Total Posts: 0</p>
-                    <p style="font-size: 11px; color: #8e8e8e; margin-top: 5px;">(সর্বোচ্চ 100 টি পোস্ট পর্যন্ত উপার্জিত টাকা 400 টাকা পাবেন)</p>
                 </div>
             </div>
 
             <div class="milestone-box">
-                <h4 style="margin-bottom: 10px; color: #262626; font-size: 1.1rem;"><i class="fa-solid fa-circle-notch" style="color:#e1306c;"></i> Story Streak Rewards</h4>
+                <h4 style="margin-bottom: 10px; color: #262626; font-size: 1.1rem;"><i class="fa-solid fa-circle-notch" style="color:#e1306c;"></i> Story Upload Earnings</h4>
                 <p style="font-size: 12.5px; color: #8e8e8e; margin-bottom: 15px; line-height: 1.5;">
-                    প্রতিদিন স্টোরি আপলোড করলে <strong>₹২</strong> পাবেন। 
-                    এক মাস (৩০ দিন) পূর্ণ হলে <strong>+₹৫</strong> বোনাস। 
-                    ১০০ দিনে <strong>+₹৫০</strong>, ২০০ দিনে <strong>+₹১০০</strong>, এবং ৩৬৫ দিনে <strong>+₹৫০০</strong> বোনাস পাবেন!
+                    প্রতিদিন স্টোরি আপলোড করলে <strong>₹২</strong> পাবেন। (মেম্বারশিপ থাকলে <strong>₹৩</strong> পাবেন)। 
                 </p>
-                <div style="text-align: center; background: rgba(225, 48, 108, 0.1); padding: 20px; border-radius: 12px; border: 1px dashed #e1306c;">
-                    <h3 id="story-streak-count" style="color: #e1306c; font-size: 2rem; margin-bottom: 5px;">0 Days</h3>
-                    <span style="font-size: 13px; color: #e1306c; font-weight: 600;">Current Daily Streak</span>
-                </div>
             </div>
         </div>
 
@@ -612,7 +620,6 @@
             <i class="fa-solid fa-xmark close-story" style="position:absolute; top:25px; right:15px; z-index:20; color:#fff;" onclick="closeStoryViewer()"></i>
             
             <div class="story-media-container" id="story-media-container">
-                <!-- Tap zones are kept for clicks, swipe is added via JS at the bottom -->
                 <div class="tap-zone left" onclick="prevStory()"></div>
                 <div class="tap-zone right" onclick="nextStory()"></div>
             </div>
@@ -625,7 +632,6 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Insta Story Database (Main App)
         const firebaseConfig = {
             apiKey: "AIzaSyD5ZsNOaprK3pJafOmRZYbC-s-HLAK-Msg",
             authDomain: "insta-story-da3ac.firebaseapp.com",
@@ -638,7 +644,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Zuu Pay Database (Secondary App for Auto Withdrawal)
         const zuuPayConfig = {
             apiKey: "AIzaSyBbBKnhSe4Oy43DSQAYJa5wiuR-rktw3Cc",
             authDomain: "zuu-pay.firebaseapp.com",
@@ -656,7 +661,6 @@
         let isFirstLoad = true;
         let unreadNotifCount = 0;
 
-        // --- MUSIC FEATURE VARIABLES ---
         let selMusicUrl = null;
         let selMusicName = "";
         let selAudioFile = null; 
@@ -676,7 +680,6 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            // Pause all media when leaving home page
             if (page !== 'home') {
                 document.querySelectorAll('audio, video').forEach(media => media.pause());
                 document.querySelectorAll('.audio-toggle-btn').forEach(btn => {
@@ -702,7 +705,6 @@
             }
         };
 
-        // --- BACKGROUND STOP FEATURE ---
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) {
                 document.querySelectorAll('audio, video').forEach(media => media.pause());
@@ -729,7 +731,7 @@
                 if (isLogin) { await signInWithEmailAndPassword(auth, e, p); } 
                 else {
                     const c = await createUserWithEmailAndPassword(auth, e, p);
-                    await setDoc(doc(db, "users", c.user.uid), { uid: c.user.uid, name: n, email: e, bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], postCount: 0, walletBalance: 0, storyStreak: 0, lastStoryDate: "", milestonesClaimed: {}, verificationStatus: "none" });
+                    await setDoc(doc(db, "users", c.user.uid), { uid: c.user.uid, name: n, email: e, bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], postCount: 0, walletBalance: 0, storyStreak: 0, membershipStatus: 'none', verificationStatus: "none" });
                 }
             } catch (err) { showToast("Authentication failed."); }
             document.getElementById('global-loader').classList.add('hidden');
@@ -769,6 +771,26 @@
         });
 
         window.askLogout = () => { window.openProConfirm("Log Out of Insta Story?", () => signOut(auth)); };
+
+        let paymentTypeContext = ''; 
+        
+        window.openPaymentModal = (type, amount) => {
+            document.getElementById('profile-menu-modal').classList.add('hidden');
+            document.getElementById('verification-modal').classList.add('hidden');
+            paymentTypeContext = type;
+            document.getElementById('payment-title').innerHTML = type === 'membership' ? '<i class="fa-solid fa-crown"></i> Get Membership' : '<i class="fa-solid fa-certificate"></i> Get Verified';
+            document.getElementById('payment-amount').innerText = `₹${amount}`;
+            document.getElementById('payment-txn-id').value = '';
+            document.getElementById('payment-modal').classList.remove('hidden');
+        };
+
+        window.submitPayment = async () => {
+            const txnId = document.getElementById('payment-txn-id').value.trim();
+            if (txnId.length < 10) return showToast("Enter a valid UPI Transaction ID");
+            
+            showToast("Payment submitted to Admin for manual review!");
+            document.getElementById('payment-modal').classList.add('hidden');
+        };
 
         function loadAllData() {
             document.getElementById('global-loader').classList.remove('hidden');
@@ -901,15 +923,44 @@
             }
         };
 
+        function attachDoubleTapLike(wrap, post, isLiked) {
+            let lastT = 0;
+            wrap.addEventListener('click', (e) => {
+                if(e.target.closest('.audio-toggle-btn')) return;
+                const now = Date.now();
+                if (now - lastT < 300) {
+                    const heartIcon = wrap.parentElement.querySelector('.post-actions .fa-heart');
+                    const newLikeState = !heartIcon.classList.contains('liked');
+                    
+                    if (newLikeState) {
+                        heartIcon.className = 'fa-solid fa-heart liked'; heartIcon.style.color = '#ed4956';
+                    } else {
+                        heartIcon.className = 'fa-regular fa-heart'; heartIcon.style.color = '';
+                    }
+                    togglePostLike(post.id, post.uid, !newLikeState); 
+                    
+                    const r = wrap.getBoundingClientRect(); const h = document.createElement('div');
+                    h.className = 'like-animation'; 
+                    h.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" fill="#ed4956" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                    h.style.left = (e.clientX - r.left) + 'px'; h.style.top = (e.clientY - r.top) + 'px';
+                    wrap.appendChild(h); setTimeout(() => h.remove(), 600);
+                }
+                lastT = now;
+            });
+        }
+
         function renderHomeFeed() {
             const feed = document.getElementById("home-feed"); feed.innerHTML = '';
+            let postCounter = 0;
+
             allPosts.forEach(post => {
-                const u = allUsers.find(usr => usr.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none' };
+                const u = allUsers.find(usr => usr.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none', membershipStatus: 'none' };
                 const isLiked = post.likes && post.likes.includes(currentUser.uid);
                 const isOwnPost = post.uid === currentUser.uid;
                 const userStories = groupedStories[post.uid] || [];
                 const hasUnviewedStory = userStories.some(s => !hasViewedStory(s.id));
                 const isVer = u.verificationStatus === 'verified' ? `<i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:12px; margin-left:3px;"></i>` : '';
+                const isMember = u.membershipStatus === 'active' ? `<span class="member-badge"><i class="fa-solid fa-crown"></i> PRO</span>` : '';
                 
                 let avatarHtml = `<img src="${u.avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">`;
                 if (hasUnviewedStory) { avatarHtml = `<div class="feed-story-ring has-story"><img src="${u.avatar}"></div>`; }
@@ -931,7 +982,7 @@
                 const div = document.createElement('div'); div.className = 'post-card';
                 div.innerHTML = `
                     <div class="post-header">
-                        <div class="post-user-info" onclick="handleFeedProfileClick('${post.uid}')">${avatarHtml}<span>${u.name}${isVer}</span></div>
+                        <div class="post-user-info" onclick="handleFeedProfileClick('${post.uid}')">${avatarHtml}<span>${u.name}${isVer}${isMember}</span></div>
                         ${isOwnPost ? `<i class="fa-regular fa-trash-can delete-post-btn" onclick="askDeletePost('${post.id}')"></i>` : ''}
                     </div>
                     <div class="post-media-wrapper" id="post-wrapper-${post.id}">
@@ -939,7 +990,7 @@
                         ${audioHtml}
                     </div>
                     <div class="post-actions">
-                        <i class="${isLiked ? 'fa-solid liked' : 'fa-regular'} fa-heart" onclick="togglePostLike('${post.id}', '${post.uid}', ${isLiked})"></i>
+                        <i class="${isLiked ? 'fa-solid liked' : 'fa-regular'} fa-heart" onclick="togglePostLike('${post.id}', '${post.uid}', ${isLiked})" style="${isLiked ? 'color:#ed4956;' : ''}"></i>
                         <i class="fa-regular fa-comment" onclick="openComments('${post.id}', '${post.uid}')"></i>
                         <i class="fa-regular fa-paper-plane" onclick="openShareModal('${post.id}')"></i>
                     </div>
@@ -948,27 +999,30 @@
                 `;
                 feed.appendChild(div);
                 
-                const wrap = document.getElementById(`post-wrapper-${post.id}`);
-                if (wrap) {
-                    let lastT = 0;
-                    wrap.addEventListener('click', (e) => {
-                        if(e.target.closest('.audio-toggle-btn')) return;
-                        
-                        const now = Date.now();
-                        if (now - lastT < 300) {
-                            if (!isLiked) togglePostLike(post.id, post.uid, false);
-                            const r = wrap.getBoundingClientRect(); const h = document.createElement('div');
-                            h.className = 'like-animation'; 
-                            h.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" fill="#ed4956" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
-                            h.style.left = (e.clientX - r.left) + 'px'; h.style.top = (e.clientY - r.top) + 'px';
-                            wrap.appendChild(h); setTimeout(() => h.remove(), 600);
-                        }
-                        lastT = now;
-                    });
+                const wrap = div.querySelector(`#post-wrapper-${post.id}`);
+                if (wrap) attachDoubleTapLike(wrap, post, isLiked);
+                
+                postCounter++;
+                
+                // === Adsterra Native Banner Ad (Every 5 posts) ===
+                if (postCounter % 5 === 0) {
+                    const adDiv = document.createElement('div');
+                    adDiv.className = 'post-card';
+                    adDiv.innerHTML = `
+                        <div class="post-header" style="border-bottom:1px solid #efefef;">
+                            <div class="post-user-info">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #0095f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;">Ad</div>
+                                <span>Sponsored</span>
+                            </div>
+                        </div>
+                        <div class="adsterra-ad-container" style="min-height: 250px; padding: 10px; display: flex; justify-content: center; align-items: center;">
+                            <div id="container-2425ef7a251ef180c0d2a5d9961fab3e" style="width: 100%;"></div>
+                        </div>
+                    `;
+                    feed.appendChild(adDiv);
                 }
             });
 
-            // --- AUDIO AUTOPLAY LOGIC (UPDATED) ---
             if(window.feedObserver) window.feedObserver.disconnect();
             
             window.feedObserver = new IntersectionObserver((entries) => {
@@ -980,27 +1034,14 @@
                         audios.forEach(audio => {
                             if (!audio.paused) {
                                 audio.pause();
-                                const btnId = audio.id.replace('post-audio-', 'audio-btn-');
-                                const btnElem = document.getElementById(btnId);
-                                if (btnElem) {
-                                    btnElem.innerHTML = '<i class="fas fa-volume-mute"></i>';
-                                    btnElem.classList.remove('playing');
-                                }
+                                const btnElem = document.getElementById(audio.id.replace('post-audio-', 'audio-btn-'));
+                                if (btnElem) { btnElem.innerHTML = '<i class="fas fa-volume-mute"></i>'; btnElem.classList.remove('playing'); }
                             }
                         });
-                        videos.forEach(video => {
-                            if (!video.paused) video.pause();
-                        });
+                        videos.forEach(video => { if (!video.paused) video.pause(); });
                     } else {
-                        // Play Video
-                        videos.forEach(video => {
-                            let p = video.play();
-                            if (p !== undefined) p.catch(e => console.log('Video Autoplay blocked'));
-                        });
-                        
-                        // Play Audio for the most visible post
+                        videos.forEach(video => { let p = video.play(); if (p !== undefined) p.catch(e => console.log('Video Autoplay blocked')); });
                         audios.forEach(audio => {
-                            // Pause all other global audios first to ensure no 2 play together
                             document.querySelectorAll('audio[id^="post-audio-"]').forEach(a => {
                                 if (a !== audio && !a.paused) {
                                     a.pause();
@@ -1008,16 +1049,11 @@
                                     if(b) { b.innerHTML = '<i class="fas fa-volume-mute"></i>'; b.classList.remove('playing'); }
                                 }
                             });
-                            
                             let p = audio.play();
                             if (p !== undefined) {
                                 p.then(() => {
-                                    const btnId = audio.id.replace('post-audio-', 'audio-btn-');
-                                    const btnElem = document.getElementById(btnId);
-                                    if (btnElem) {
-                                        btnElem.innerHTML = '<i class="fas fa-volume-up"></i>';
-                                        btnElem.classList.add('playing');
-                                    }
+                                    const btnElem = document.getElementById(audio.id.replace('post-audio-', 'audio-btn-'));
+                                    if (btnElem) { btnElem.innerHTML = '<i class="fas fa-volume-up"></i>'; btnElem.classList.add('playing'); }
                                 }).catch(e => console.log('Audio Autoplay blocked without user interaction'));
                             }
                         });
@@ -1084,12 +1120,13 @@
             const post = allPosts.find(p => p.id === postId);
             if(!post) return showToast("Post unavailable");
             
-            const userObj = allUsers.find(u => u.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none' };
+            const userObj = allUsers.find(u => u.uid === post.uid) || { name: 'User', avatar: 'https://picsum.photos/100', verificationStatus: 'none', membershipStatus:'none' };
             const isLiked = post.likes && post.likes.includes(currentUser.uid);
             const likeCount = post.likes ? post.likes.length : 0;
             const isVer = userObj.verificationStatus === 'verified' ? `<i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:12px; margin-left:3px;"></i>` : '';
+            const isMem = userObj.membershipStatus === 'active' ? `<span class="member-badge"><i class="fa-solid fa-crown"></i> PRO</span>` : '';
             
-            document.getElementById('pv-user-info').innerHTML = `<img src="${userObj.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;"><span>${userObj.name}${isVer}</span>`;
+            document.getElementById('pv-user-info').innerHTML = `<img src="${userObj.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;"><span>${userObj.name}${isVer}${isMem}</span>`;
             const mediaContainer = document.getElementById('pv-media');
             
             let videoMuted = post.musicUrl ? 'muted' : '';
@@ -1132,12 +1169,12 @@
             let u = allUsers.find(usr => usr.uid === uid);
             
             if (!u) {
-                if (uid === currentUser.uid) u = { name: "My Profile", bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], verificationStatus: 'none' };
+                if (uid === currentUser.uid) u = { name: "My Profile", bio: "Available", avatar: "https://picsum.photos/200", followers: [], following: [], verificationStatus: 'none', membershipStatus:'none' };
                 else return;
             }
 
             document.getElementById("profile-top-name").innerText = u.name || "Profile";
-            document.getElementById("profile-name").innerHTML = (u.name || "User") + (u.verificationStatus === 'verified' ? ` <i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:14px; margin-left:5px;"></i>` : '');
+            document.getElementById("profile-name").innerHTML = (u.name || "User") + (u.verificationStatus === 'verified' ? ` <i class="fa-solid fa-circle-check" style="color:#0095f6; font-size:14px; margin-left:5px;"></i>` : '') + (u.membershipStatus === 'active' ? `<span class="member-badge" style="font-size:12px;"><i class="fa-solid fa-crown"></i> PRO</span>` : '');
             document.getElementById("profile-bio-text").innerText = u.bio || "";
             document.getElementById("profile-page-avatar").src = u.avatar || "https://picsum.photos/200";
             document.getElementById("stat-followers").innerText = (u.followers || []).length;
@@ -1174,15 +1211,20 @@
             });
         }
 
-        // ==========================================
-        // PROFILE MENU & VERIFICATION LOGIC
-        // ==========================================
         window.openProfileMenu = () => document.getElementById('profile-menu-modal').classList.remove('hidden');
         window.openAboutApp = () => { document.getElementById('profile-menu-modal').classList.add('hidden'); document.getElementById('about-app-modal').classList.remove('hidden'); };
         window.openPrivacyPolicy = () => { document.getElementById('profile-menu-modal').classList.add('hidden'); document.getElementById('privacy-policy-modal').classList.remove('hidden'); };
         
         window.openVerificationMenu = async () => {
             document.getElementById('profile-menu-modal').classList.add('hidden');
+            
+            // Show Adsterra Ad when opening verification menu
+            showAdsterraAdModal('Verification Center', () => {
+                checkAndShowVerificationModal();
+            });
+        };
+
+        async function checkAndShowVerificationModal() {
             const uRef = doc(db, "users", currentUser.uid);
             const uSnap = await getDoc(uRef);
             const uData = uSnap.data();
@@ -1191,27 +1233,31 @@
             if(uData.verificationStatus === 'rejected') {
                 const rejectDate = uData.verificationLastRejected ? uData.verificationLastRejected.toMillis() : 0;
                 const daysPassed = (Date.now() - rejectDate) / (1000 * 60 * 60 * 24);
-                if (daysPassed < 90) {
-                    notice.style.display = 'block';
-                } else {
-                    notice.style.display = 'none';
-                    await updateDoc(uRef, { verificationStatus: 'none' });
-                }
-            } else {
-                notice.style.display = 'none';
-            }
+                if (daysPassed < 90) { notice.style.display = 'block'; } else { notice.style.display = 'none'; await updateDoc(uRef, { verificationStatus: 'none' }); }
+            } else { notice.style.display = 'none'; }
             
-            if(uData.verificationStatus === 'pending') {
-                showToast("Your verification request is pending admin review.");
-                return;
-            }
-            if(uData.verificationStatus === 'verified') {
-                showToast("Your account is already verified!");
-                return;
-            }
+            if(uData.verificationStatus === 'pending') return showToast("Your verification request is pending admin review.");
+            if(uData.verificationStatus === 'verified') return showToast("Your account is already verified!");
 
             document.getElementById('verification-modal').classList.remove('hidden');
-        };
+        }
+
+        // Helper function for Verification Ad
+        function showAdsterraAdModal(title, callback) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay center';
+            modal.style.zIndex = '10000';
+            modal.innerHTML = `
+                <div class="modal-content" style="text-align: center;">
+                    <div class="modal-title">${title}</div>
+                    <div class="adsterra-ad-container" style="min-height: 250px; background: #fafafa; border-radius: 10px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
+                        <div id="container-2425ef7a251ef180c0d2a5d9961fab3e" style="width: 100%;"></div>
+                    </div>
+                    <button class="action-btn" style="width: 100%;" onclick="this.closest('.modal-overlay').remove(); ${callback.toString().replace(/'/g, "\\'")}()">Continue</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
 
         window.applyForVerification = async () => {
             const uRef = doc(db, "users", currentUser.uid);
@@ -1225,23 +1271,92 @@
             }
 
             const followers = (uData.followers || []).length;
-            if(followers >= 1000) {
+            if(followers >= 100) {
                 await updateDoc(uRef, { verificationStatus: 'pending' });
                 showToast("Request submitted successfully! Admin will review.");
                 document.getElementById('verification-modal').classList.add('hidden');
             } else {
-                window.openProConfirm("ফলোয়ার 1000 এর কম! 900 টাকা মেম্বারশিপ ফি দিতে চান?", async () => {
-                    // Simulated Bluetooth Verification payment logic
-                    showToast("Payment processing via bluetooth verification... Success!");
-                    await updateDoc(uRef, { verificationStatus: 'pending' });
-                    document.getElementById('verification-modal').classList.add('hidden');
-                });
+                showToast("Need at least 100 followers to apply for free.");
             }
         };
 
-        // ==========================================
-        // ADMIN PANEL LOGIC
-        // ==========================================
+        // ============================================================
+        // ADMIN AUDIO & ADMIN PANEL LOGIC
+        // ============================================================
+        (function addAudioUploadToAdminPanel() {
+            const observer = new MutationObserver(() => {
+                const adminList = document.getElementById('admin-user-list');
+                if (adminList && !document.getElementById('admin-audio-upload-section')) {
+                    const audioSection = document.createElement('div');
+                    audioSection.id = 'admin-audio-upload-section';
+                    audioSection.style.cssText = `background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);`;
+                    audioSection.innerHTML = `
+                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;"><i class="fas fa-music" style="color: #0095f6;"></i> Audio Library Upload</h3>
+                        <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">এখান থেকে অডিও আপলোড করলে সেগুলো অ্যাপের মিউজিক সিলেকশন পেজে চলে যাবে।</p>
+                        <input type="text" id="admin-audio-name" placeholder="Song Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
+                        <input type="text" id="admin-audio-artist" placeholder="Artist Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
+                        <input type="file" id="admin-audio-file" accept="audio/*" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #fafafa;">
+                        <button id="admin-audio-upload-btn" class="publish-btn" style="width: 100%; padding: 12px; background: #0095f6; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;"><i class="fas fa-cloud-upload-alt"></i> Upload Audio</button>
+                        <div id="admin-audio-list" style="margin-top: 15px;"></div>
+                    `;
+                    adminList.parentNode.insertBefore(audioSection, adminList);
+                    document.getElementById('admin-audio-upload-btn').addEventListener('click', uploadAdminAudio);
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        })();
+
+        async function uploadAdminAudio() {
+            const nameInput = document.getElementById('admin-audio-name');
+            const artistInput = document.getElementById('admin-audio-artist');
+            const fileInput = document.getElementById('admin-audio-file');
+            
+            const name = nameInput.value.trim();
+            const artist = artistInput.value.trim() || 'Unknown Artist';
+            const file = fileInput.files[0];
+            
+            if (!name) return showToast('অনুগ্রহ করে গানের নাম দিন');
+            if (!file) return showToast('অনুগ্রহ করে একটি অডিও ফাইল নির্বাচন করুন');
+            if (!file.type.startsWith('audio/')) return showToast('শুধুমাত্র অডিও ফাইল আপলোড করুন');
+            
+            const overlay = document.getElementById('upload-progress-overlay');
+            const bar = document.getElementById('upload-progress-bar');
+            const txt = document.getElementById('upload-progress-text');
+            const stat = document.getElementById('progress-status-text');
+            
+            overlay.classList.remove('hidden');
+            stat.innerText = "Uploading Audio..."; bar.style.width = "0%"; txt.innerText = "0%";
+            
+            try {
+                const data = await uploadWithProgress(file, "Insta Story", (pct) => { bar.style.width = pct + "%"; txt.innerText = pct + "%"; });
+                await addDoc(collection(db, "admin_audio"), { name: name, artist: artist, url: data.secure_url, uploadedBy: currentUser.uid, timestamp: serverTimestamp() });
+                showToast('✅ অডিও সফলভাবে আপলোড হয়েছে!');
+                nameInput.value = ''; artistInput.value = ''; fileInput.value = '';
+                loadAdminAudioList();
+            } catch (e) { console.error(e); showToast('❌ অডিও আপলোড ব্যর্থ হয়েছে'); }
+            overlay.classList.add('hidden');
+        }
+
+        async function loadAdminAudioList() {
+            const listContainer = document.getElementById('admin-audio-list');
+            if (!listContainer) return;
+            listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e;">Loading...</p>';
+            try {
+                const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
+                listContainer.innerHTML = '';
+                if (snap.empty) { listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e; text-align: center;">কোনো অডিও আপলোড করা হয়নি।</p>'; return; }
+                snap.forEach((docSnap) => {
+                    const audio = docSnap.data(); const audioId = docSnap.id;
+                    const div = document.createElement('div');
+                    div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; gap: 10px;`;
+                    div.innerHTML = `<div style="flex: 1; overflow: hidden;"><div style="font-size: 13px; font-weight: 600; color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${audio.name}</div><div style="font-size: 11px; color: #8e8e8e;">${audio.artist}</div></div><audio src="${audio.url}" controls style="height: 30px; width: 120px;"></audio><button onclick="deleteAdminAudio('${audioId}')" style="background: #dc3545; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer;"><i class="fas fa-trash"></i></button>`;
+                    listContainer.appendChild(div);
+                });
+            } catch (e) { console.error(e); listContainer.innerHTML = '<p style="font-size: 12px; color: #dc3545;">লোড করতে সমস্যা হয়েছে।</p>'; }
+        }
+
+        window.deleteAdminAudio = (audioId) => { window.openProConfirm("এই অডিওটি ডিলিট করতে চান?", async () => { try { await deleteDoc(doc(db, "admin_audio", audioId)); showToast('🗑️ অডিও ডিলিট হয়েছে'); loadAdminAudioList(); } catch (e) { showToast('ডিলিট করতে সমস্যা হয়েছে'); } }); };
+
         window.loadAdminPanel = async () => {
             const list = document.getElementById('admin-user-list');
             const vList = document.getElementById('admin-verification-list');
@@ -1256,12 +1371,9 @@
                 const uid = docSnap.id;
                 const isBlocked = u.isBlocked || false;
                 
-                // User List Rendering
                 const div = document.createElement('div');
                 div.className = 'list-item';
-                div.style.border = '1px solid #dbdbdb';
-                div.style.marginBottom = '10px';
-                div.style.borderRadius = '10px';
+                div.style.border = '1px solid #dbdbdb'; div.style.marginBottom = '10px'; div.style.borderRadius = '10px';
                 div.innerHTML = `
                     <img src="${u.avatar || 'https://picsum.photos/100'}" style="width:50px; height:50px;">
                     <div class="list-item-content" style="flex:1;">
@@ -1273,14 +1385,10 @@
                         <button class="action-btn" style="background:${isBlocked ? '#28a745' : '#ffc107'}; color:#000; padding:5px 10px; font-size:11px;" onclick="toggleBlockUser('${uid}', ${isBlocked})">
                             ${isBlocked ? 'Unblock' : 'Block'}
                         </button>
-                        <button class="action-btn" style="background:#dc3545; color:#fff; padding:5px 10px; font-size:11px;" onclick="deleteUserPermanently('${uid}')">
-                            Delete
-                        </button>
                     </div>
                 `;
                 list.appendChild(div);
 
-                // Verification List Rendering
                 if(u.verificationStatus === 'pending') {
                     const vDiv = document.createElement('div');
                     vDiv.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #efefef;';
@@ -1298,43 +1406,22 @@
                 }
             });
             if(vList.innerHTML === '') vList.innerHTML = '<p style="font-size:12px; color:#8e8e8e;">No pending requests.</p>';
+            
+            setTimeout(() => { if (document.getElementById('admin-audio-list')) { loadAdminAudioList(); } }, 500);
         };
 
         window.handleVerification = async (uid, status) => {
             const updateData = { verificationStatus: status };
             if(status === 'rejected') updateData.verificationLastRejected = serverTimestamp();
             await updateDoc(doc(db, "users", uid), updateData);
-            showToast(`Verification ${status}`);
-            loadAdminPanel();
+            showToast(`Verification ${status}`); loadAdminPanel();
         };
 
         window.toggleBlockUser = async (uid, currentStatus) => {
             await updateDoc(doc(db, "users", uid), { isBlocked: !currentStatus });
-            showToast(currentStatus ? "User Unblocked" : "User Blocked");
-            loadAdminPanel();
+            showToast(currentStatus ? "User Unblocked" : "User Blocked"); loadAdminPanel();
         };
 
-        window.deleteUserPermanently = (uid) => {
-            window.openProConfirm("Are you sure you want to delete this user permanently?", async () => {
-                document.getElementById('global-loader').classList.remove('hidden');
-                try {
-                    const posts = await getDocs(query(collection(db, "posts"), where("uid", "==", uid)));
-                    posts.forEach(async (p) => await deleteDoc(doc(db, "posts", p.id)));
-                    
-                    const stories = await getDocs(query(collection(db, "stories"), where("uid", "==", uid)));
-                    stories.forEach(async (s) => await deleteDoc(doc(db, "stories", s.id)));
-
-                    await deleteDoc(doc(db, "users", uid));
-                    showToast("User deleted permanently.");
-                    loadAdminPanel();
-                } catch (e) { showToast("Error deleting user."); }
-                document.getElementById('global-loader').classList.add('hidden');
-            });
-        };
-
-        // ==========================================
-        // CREATOR HUB & AUTO WITHDRAW
-        // ==========================================
         window.loadCreatorHub = async () => {
             try {
                 const uRef = doc(db, "users", currentUser.uid);
@@ -1343,14 +1430,12 @@
                 
                 document.getElementById('creator-wallet-bal').innerText = `₹${uData.walletBalance || 0}`;
                 document.getElementById('post-progress-text').innerText = `Your Total Posts: ${uData.postCount || 0}`;
-                document.getElementById('story-streak-count').innerText = `${uData.storyStreak || 0} Days`;
             } catch(e) { console.log(e); }
         }
 
         window.withdrawToZuuPay = async () => {
             const zuuid = document.getElementById('withdraw-zuuid').value.trim();
             if(!zuuid || zuuid.length < 5) return showToast("দয়া করে সঠিক Zuu Pay ID দিন");
-            
             document.getElementById('global-loader').classList.remove('hidden');
             
             try {
@@ -1377,7 +1462,6 @@
                 await updateDoc(uRef, { walletBalance: 0 });
                 await updateDoc(doc(zuuDb, "users", zuuUserDoc.id), { balance: (zuuUserData.balance || 0) + bal });
                 await addDoc(collection(zuuDb, "transactions"), { senderUid: "insta_story_earn", senderName: "Insta Story (Earn App)", receiverUid: zuuUserData.uid, receiverName: zuuUserData.name, amount: bal, timestamp: serverTimestamp(), type: 'transfer' });
-                await addDoc(collection(db, "withdrawals"), { uid: currentUser.uid, zuuId: zuuid, amount: bal, timestamp: serverTimestamp(), status: 'Completed' });
                 
                 showToast(`₹${bal} আপনার Zuu Pay একাউন্টে সফলভাবে যোগ হয়েছে!`);
                 document.getElementById('withdraw-zuuid').value = '';
@@ -1455,36 +1539,26 @@
         window.closeModals = (e) => { 
             if(!e || e.target.classList.contains('modal-overlay') || e.target.classList.contains('close-btn')) {
                 document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
-                
                 if(previewAudioObj) { previewAudioObj.pause(); } 
-                
                 const pvMedia = document.getElementById('pv-media');
                 if(pvMedia) {
-                    const pvAudio = pvMedia.querySelector('audio');
-                    if(pvAudio) { pvAudio.pause(); pvAudio.currentTime = 0; }
-                    const pvVideo = pvMedia.querySelector('video');
-                    if(pvVideo) { pvVideo.pause(); pvVideo.currentTime = 0; }
+                    const pvAudio = pvMedia.querySelector('audio'); if(pvAudio) { pvAudio.pause(); pvAudio.currentTime = 0; }
+                    const pvVideo = pvMedia.querySelector('video'); if(pvVideo) { pvVideo.pause(); pvVideo.currentTime = 0; }
                 }
             }
         };
 
         window.triggerFileSelect = (t) => { 
-            upType = t; 
-            document.getElementById('upload-menu-modal').classList.add('hidden'); 
-            const fileInput = document.getElementById('mediaFile');
-            fileInput.accept = 'image/*, video/*'; 
-            fileInput.click(); 
+            upType = t; document.getElementById('upload-menu-modal').classList.add('hidden'); 
+            const fileInput = document.getElementById('mediaFile'); fileInput.accept = 'image/*, video/*'; fileInput.click(); 
         };
 
         window.showPreviewModal = () => {
             selFile = document.getElementById("mediaFile").files[0]; if (!selFile) return;
             if (upType === 'post' && selFile.type.startsWith('video/')) {
                 showToast("Post শুধুমাত্র ফটো সাপোর্ট করে।");
-                document.getElementById("mediaFile").value = "";
-                selFile = null;
-                return;
+                document.getElementById("mediaFile").value = ""; selFile = null; return;
             }
-
             document.getElementById('preview-title').innerText = upType === 'post' ? "New Post" : "New Story";
             const u = URL.createObjectURL(selFile);
             document.getElementById('preview-container').innerHTML = selFile.type.startsWith('video/') ? `<video src="${u}" controls></video>` : `<img src="${u}">`;
@@ -1492,85 +1566,74 @@
             document.getElementById('preview-modal').classList.remove('hidden');
         };
 
-        window.openMusicModal = () => {
+        window.openMusicModal = async () => {
             const container = document.getElementById('music-list-container');
-            container.innerHTML = '';
-            cloudMusicLibrary.forEach(m => {
-                container.innerHTML += `
-                    <div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')">
-                        <div class="music-info">
-                            <div class="music-icon"><i class="fas fa-music"></i></div>
-                            <div>
-                                <div style="font-weight:600; font-size:14px;">${m.name}</div>
-                                <div style="font-size:12px; color:#8e8e8e;">${m.artist}</div>
-                            </div>
-                        </div>
-                        <i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i>
-                    </div>
-                `;
-            });
+            container.innerHTML = '<p style="text-align:center; color:#8e8e8e; padding:20px;">Loading...</p>';
+            try {
+                const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
+                let adminAudioHtml = '';
+                if (!snap.empty) {
+                    adminAudioHtml += `<div style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #0095f6; border-bottom: 1px solid #efefef; margin-bottom: 8px;"><i class="fas fa-crown"></i> Admin Uploaded</div>`;
+                    snap.forEach((docSnap) => {
+                        const audio = docSnap.data();
+                        adminAudioHtml += `<div class="music-item" onclick="selectMusic('${audio.url}', '${audio.name.replace(/'/g, "\\'")}')"><div class="music-info"><div class="music-icon" style="background: linear-gradient(45deg, #0095f6, #00c6ff);"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${audio.name}</div><div style="font-size:12px; color:#8e8e8e;">${audio.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
+                    });
+                }
+                let defaultHtml = `<div style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #8e8e8e; border-bottom: 1px solid #efefef; margin-bottom: 8px; margin-top: 10px;"><i class="fas fa-globe"></i> Default Library</div>`;
+                cloudMusicLibrary.forEach(m => {
+                    defaultHtml += `<div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')"><div class="music-info"><div class="music-icon"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${m.name}</div><div style="font-size:12px; color:#8e8e8e;">${m.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
+                });
+                container.innerHTML = adminAudioHtml + defaultHtml;
+            } catch (e) {
+                console.error(e);
+                let defaultHtml = '';
+                cloudMusicLibrary.forEach(m => { defaultHtml += `<div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')"><div class="music-info"><div class="music-icon"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${m.name}</div><div style="font-size:12px; color:#8e8e8e;">${m.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`; });
+                container.innerHTML = defaultHtml;
+            }
             document.getElementById('music-modal').classList.remove('hidden');
         };
 
-        window.filterMusic = (q) => {
-            const query = q.toLowerCase();
+        window.filterMusic = async (q) => {
+            const queryStr = q.toLowerCase();
             const container = document.getElementById('music-list-container');
-            container.innerHTML = '';
-            cloudMusicLibrary.filter(m => m.name.toLowerCase().includes(query) || m.artist.toLowerCase().includes(query)).forEach(m => {
-                container.innerHTML += `
-                    <div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')">
-                        <div class="music-info">
-                            <div class="music-icon"><i class="fas fa-music"></i></div>
-                            <div>
-                                <div style="font-weight:600; font-size:14px;">${m.name}</div>
-                                <div style="font-size:12px; color:#8e8e8e;">${m.artist}</div>
-                            </div>
-                        </div>
-                        <i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i>
-                    </div>
-                `;
-            });
+            container.innerHTML = '<p style="text-align:center; color:#8e8e8e; padding:10px;">Searching...</p>';
+            try {
+                const snap = await getDocs(collection(db, "admin_audio"));
+                let html = '';
+                snap.forEach((docSnap) => {
+                    const audio = docSnap.data();
+                    if (audio.name.toLowerCase().includes(queryStr) || audio.artist.toLowerCase().includes(queryStr)) {
+                        html += `<div class="music-item" onclick="selectMusic('${audio.url}', '${audio.name.replace(/'/g, "\\'")}')"><div class="music-info"><div class="music-icon" style="background: linear-gradient(45deg, #0095f6, #00c6ff);"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${audio.name}</div><div style="font-size:12px; color:#8e8e8e;">${audio.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
+                    }
+                });
+                cloudMusicLibrary.filter(m => m.name.toLowerCase().includes(queryStr) || m.artist.toLowerCase().includes(queryStr)).forEach(m => {
+                    html += `<div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')"><div class="music-info"><div class="music-icon"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${m.name}</div><div style="font-size:12px; color:#8e8e8e;">${m.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
+                });
+                container.innerHTML = html || '<p style="text-align:center; color:#8e8e8e; padding:20px;">কোনো মিউজিক পাওয়া যায়নি।</p>';
+            } catch (e) { console.error(e); container.innerHTML = '<p style="text-align:center; color:#dc3545; padding:20px;">সার্চ করতে সমস্যা হয়েছে।</p>'; }
         };
 
         window.handleLocalAudioUpload = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('audio/')) {
-                showToast("Please select a valid audio file.");
-                return;
-            }
-            selAudioFile = file;
-            selMusicName = file.name;
-            selMusicUrl = URL.createObjectURL(file);
-
+            const file = e.target.files[0]; if (!file || !file.type.startsWith('audio/')) return showToast("Please select a valid audio file.");
+            selAudioFile = file; selMusicName = file.name; selMusicUrl = URL.createObjectURL(file);
             document.getElementById('selected-music-name').innerText = selMusicName;
             document.getElementById('selected-music-container').style.display = 'inline-flex';
             document.getElementById('music-modal').classList.add('hidden');
-            
             if(previewAudioObj) { previewAudioObj.pause(); }
-            previewAudioObj = new Audio(selMusicUrl);
-            previewAudioObj.play().catch(e=>console.log(e));
-            
-            e.target.value = ""; 
+            previewAudioObj = new Audio(selMusicUrl); previewAudioObj.play().catch(e=>console.log(e)); e.target.value = ""; 
         };
 
         window.selectMusic = (url, name) => {
-            selMusicUrl = url;
-            selMusicName = name;
-            selAudioFile = null; 
+            selMusicUrl = url; selMusicName = name; selAudioFile = null; 
             document.getElementById('selected-music-name').innerText = name;
             document.getElementById('selected-music-container').style.display = 'inline-flex';
             document.getElementById('music-modal').classList.add('hidden');
-            
             if(previewAudioObj) { previewAudioObj.pause(); }
-            previewAudioObj = new Audio(url);
-            previewAudioObj.play().catch(e=>console.log(e));
+            previewAudioObj = new Audio(url); previewAudioObj.play().catch(e=>console.log(e));
         };
 
         window.removeSelectedMusic = () => {
-            selMusicUrl = null;
-            selMusicName = "";
-            selAudioFile = null;
+            selMusicUrl = null; selMusicName = ""; selAudioFile = null;
             document.getElementById('selected-music-container').style.display = 'none';
             if(previewAudioObj) { previewAudioObj.pause(); previewAudioObj = null; }
         };
@@ -1604,6 +1667,30 @@
         };
 
         window.publishMedia = async () => {
+            if (!currentUser) return;
+            const uRef = doc(db, "users", currentUser.uid);
+            const uSnap = await getDoc(uRef);
+            let uData = uSnap.data();
+            let isMember = uData.membershipStatus === 'active';
+
+            if (upType === 'post') {
+                const todayStr = new Date().toDateString();
+                let todaysPostCount = 0;
+                allPosts.forEach(p => {
+                    if (p.uid === currentUser.uid && p.timestamp) {
+                        let postDateStr = p.timestamp.toMillis ? new Date(p.timestamp.toMillis()).toDateString() : new Date(p.timestamp).toDateString();
+                        if (postDateStr === todayStr) todaysPostCount++;
+                    }
+                });
+
+                let dailyLimit = isMember ? 3 : 1;
+                if (todaysPostCount >= dailyLimit) {
+                    showToast(`⚠️ আপনি একদিনে সর্বোচ্চ ${dailyLimit} টি পোস্ট করতে পারবেন!`);
+                    document.getElementById('preview-modal').classList.add('hidden');
+                    document.getElementById("mediaFile").value = ""; selFile = null; return;
+                }
+            }
+
             const file = selFile; if(!file) return;
             if(previewAudioObj) { previewAudioObj.pause(); previewAudioObj = null; } 
             document.getElementById('preview-modal').classList.add('hidden'); 
@@ -1616,23 +1703,20 @@
             overlay.classList.remove('hidden');
             stat.innerText = "Compressing Media..."; bar.style.width = "0%"; txt.innerText = "0%";
 
-            let finalMusicUrl = selMusicUrl;
-            let finalMusicName = selMusicName;
+            let finalMusicUrl = selMusicUrl; let finalMusicName = selMusicName;
 
             try {
                 const compFile = await compressImage(file);
                 stat.innerText = "Uploading Media...";
                 
                 const data = await uploadWithProgress(compFile, "Insta Story", (pct) => { 
-                    let p = selAudioFile ? pct/2 : pct;
-                    bar.style.width = p + "%"; txt.innerText = Math.round(p) + "%"; 
+                    let p = selAudioFile ? pct/2 : pct; bar.style.width = p + "%"; txt.innerText = Math.round(p) + "%"; 
                 });
                 
                 if (selAudioFile) {
                     stat.innerText = "Uploading Custom Audio...";
                     const audioData = await uploadWithProgress(selAudioFile, "Insta Story", (pct) => { 
-                        let p = 50 + (pct/2);
-                        bar.style.width = p + "%"; txt.innerText = Math.round(p) + "%"; 
+                        let p = 50 + (pct/2); bar.style.width = p + "%"; txt.innerText = Math.round(p) + "%"; 
                     });
                     finalMusicUrl = audioData.secure_url;
                 }
@@ -1644,59 +1728,21 @@
                     ...(upType === 'story' && { expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), viewers: [], likes: [], comments: [] })
                 });
 
-                const uRef = doc(db, "users", currentUser.uid);
-                const uSnap = await getDoc(uRef);
-                let uData = uSnap.data();
                 let wBal = uData.walletBalance || 0;
 
-                // --- POST EARNING MAX 400 (ONLY UP TO 100 POSTS) ---
                 if (upType === 'post') {
                     let pCount = (uData.postCount || 0) + 1;
                     let earned = 0;
-                    let claimed = uData.milestonesClaimed || {};
-                    
-                    if(pCount <= 100) {
-                        if(pCount === 1 && !claimed['1']) { earned += 2; claimed['1'] = true; }
-                        if(pCount === 10 && !claimed['10']) { earned += 23; claimed['10'] = true; }
-                        if(pCount === 50 && !claimed['50']) { earned += 175; claimed['50'] = true; }
-                        if(pCount === 100 && !claimed['100']) { earned += 200; claimed['100'] = true; }
-                    }
-                    
+                    if(pCount <= 100) { earned = 4; } 
                     wBal += earned;
-                    await updateDoc(uRef, { postCount: pCount, milestonesClaimed: claimed, walletBalance: wBal });
-                    
-                    if(earned > 0) showToast(`Milestone Reached! Earned ₹${earned}`);
-                    else showToast("Post Published!");
+                    await updateDoc(uRef, { postCount: pCount, walletBalance: wBal });
+                    if(earned > 0) showToast(`Post Published! Earned ₹${earned}`); else showToast("Post Published!");
                 } 
                 else if (upType === 'story') {
-                    const today = new Date().toISOString().split('T')[0];
-                    let lastDate = uData.lastStoryDate || '';
-                    let streak = uData.storyStreak || 0;
-                    
-                    if (lastDate !== today) {
-                        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-                        if (lastDate === yesterday) { streak += 1; } 
-                        else { streak = 1; }
-                        
-                        let earned = 2; // ডেইলি ২ টাকা
-                        let bonusMessage = "";
-                        
-                        if (streak % 30 === 0 && streak > 0) { earned += 5; bonusMessage = " + 5 Monthly Bonus!"; }
-                        if (streak === 100) { earned += 50; bonusMessage = " + 50 (100 Days Bonus!)"; }
-                        if (streak === 200) { earned += 100; bonusMessage = " + 100 (200 Days Bonus!)"; }
-                        if (streak === 365) { earned += 500; bonusMessage = " + 500 (1 Year Bonus!)"; }
-                        
-                        wBal += earned;
-                        await updateDoc(uRef, { lastStoryDate: today, storyStreak: streak, walletBalance: wBal });
-                        
-                        if (bonusMessage) {
-                            showToast(`Story Day ${streak}! Earned ₹${earned} ${bonusMessage}`);
-                        } else {
-                            showToast(`Story Day ${streak}! Earned ₹${earned}`);
-                        }
-                    } else {
-                        showToast("Story Added! (Already uploaded today)");
-                    }
+                    let earned = isMember ? 3 : 2;
+                    wBal += earned;
+                    await updateDoc(uRef, { walletBalance: wBal });
+                    showToast(`Story Uploaded! Earned ₹${earned}`);
                 }
             } catch (e) { showToast("Upload failed."); }
             
@@ -1707,24 +1753,19 @@
 
         window.uploadNewAvatar = async () => {
             const file = document.getElementById("avatarUpload").files[0]; if (!file) return; 
-            
             const overlay = document.getElementById('upload-progress-overlay');
             const bar = document.getElementById('upload-progress-bar');
             const txt = document.getElementById('upload-progress-text');
             const stat = document.getElementById('progress-status-text');
             
-            overlay.classList.remove('hidden');
-            stat.innerText = "Processing Photo..."; bar.style.width = "0%"; txt.innerText = "0%";
+            overlay.classList.remove('hidden'); stat.innerText = "Processing Photo..."; bar.style.width = "0%"; txt.innerText = "0%";
 
             try {
-                const comp = await compressImage(file);
-                stat.innerText = "Uploading...";
+                const comp = await compressImage(file); stat.innerText = "Uploading...";
                 const data = await uploadWithProgress(comp, "Insta Story", (pct) => { bar.style.width = pct + "%"; txt.innerText = pct + "%"; });
-                
                 stat.innerText = "Updating Profile...";
                 await setDoc(doc(db, "users", currentUser.uid), { avatar: data.secure_url }, { merge: true });
-                document.getElementById("profile-page-avatar").src = data.secure_url;
-                showToast("Profile Photo Updated!");
+                document.getElementById("profile-page-avatar").src = data.secure_url; showToast("Profile Photo Updated!");
             } catch (e) { showToast("Failed to update avatar."); }
             
             overlay.classList.add('hidden'); document.getElementById("avatarUpload").value = "";
@@ -1787,56 +1828,58 @@
             await addDoc(collection(db, `chats/${cId}/messages`), { sender: currentUser.uid, text: t, timestamp: Date.now() }); i.value = '';
         };
 
-        // --- STORY PLAYBACK UPDATE (AUTO NEXT USER & SWIPE SUPPORT) ---
+        // Story Player Logic
         let actStoryU = null, actStoryIdx = 0, stTime, isMySt = false, actStArr = [];
         window.startStoryViewer = (uid, isSelf) => {
-            // Mute all post audios in background to prevent overlapping music
             document.querySelectorAll('audio[id^="post-audio-"]').forEach(a => {
                 a.pause();
-                const btnId = a.id.replace('post-audio-', 'audio-btn-');
-                const btnElem = document.getElementById(btnId);
-                if (btnElem) {
-                    btnElem.innerHTML = '<i class="fas fa-volume-mute"></i>';
-                    btnElem.classList.remove('playing');
-                }
+                const btnElem = document.getElementById(a.id.replace('post-audio-', 'audio-btn-'));
+                if (btnElem) { btnElem.innerHTML = '<i class="fas fa-volume-mute"></i>'; btnElem.classList.remove('playing'); }
             });
-
             actStoryU = uid; isMySt = isSelf; actStoryIdx = 0; actStArr = isSelf ? myActiveStories : groupedStories[uid];
             if(!actStArr || actStArr.length === 0) return;
-            renderStoryMedia(); document.getElementById('story-viewer').classList.remove('hidden');
-            activeStoryUser = uid;
+            renderStoryMedia(); document.getElementById('story-viewer').classList.remove('hidden'); activeStoryUser = uid;
         };
 
-        function renderStoryMedia() {
+        window.renderStoryMedia = () => {
             const s = actStArr[actStoryIdx]; const u = allUsers.find(usr => usr.uid === actStoryU) || { name: 'User', avatar: ''};
             document.getElementById('viewer-user-name').innerText = u.name; document.getElementById('viewer-user-avatar').src = u.avatar;
             
-            const oldAudio = document.getElementById('current-story-audio');
-            if(oldAudio) {
-                oldAudio.pause();
-                oldAudio.currentTime = 0;
+            let optimizedUrl = s.mediaUrl;
+            if (optimizedUrl.includes('cloudinary.com')) {
+                optimizedUrl = optimizedUrl.replace('/upload/', '/upload/q_auto,f_auto/');
             }
-
-            let videoMuted = s.musicUrl ? 'muted' : '';
-            let storyAudioHtml = s.musicUrl ? `<audio id="current-story-audio" src="${s.musicUrl}"></audio>` : '';
             
-            document.getElementById('story-media-container').innerHTML = `
+            const mediaContainer = document.getElementById('story-media-container');
+            let videoMuted = s.musicUrl ? 'muted' : '';
+            let storyAudioHtml = s.musicUrl ? `<audio id="current-story-audio" src="${s.musicUrl}" autoplay></audio>` : '';
+            
+            mediaContainer.innerHTML = `
                 ${storyAudioHtml}
-                ${s.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? `<video src="${s.mediaUrl}" autoplay playsinline ${videoMuted} style="max-width: 100%; max-height: 100vh; object-fit: contain; animation: storyFadeIn 0.3s ease-in-out;"></video>` : `<img src="${s.mediaUrl}" style="animation: storyFadeIn 0.3s ease-in-out;">`}
-                <div class="tap-zone left" onclick="prevStory()"></div><div class="tap-zone right" onclick="nextStory()"></div>
+                ${s.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? `<video id="current-story-video" src="${optimizedUrl}" autoplay playsinline ${videoMuted} style="max-width: 100%; max-height: 100vh; object-fit: contain; animation: storyFadeIn 0.3s ease-in-out;"></video>` : `<img id="current-story-img" src="${optimizedUrl}" style="animation: storyFadeIn 0.3s ease-in-out;">`}
+                <div class="tap-zone left"></div><div class="tap-zone right"></div>
             `;
 
-            // Explicitly play story audio if it exists
-            const newAudio = document.getElementById('current-story-audio');
-            if (newAudio) {
-                let p = newAudio.play();
-                if(p !== undefined) {
-                    p.catch(e => console.log('Story audio blocked by browser without interaction'));
+            let lastTap = 0;
+            mediaContainer.onclick = (e) => {
+                if (e.target.closest('.story-bottom-bar')) return;
+                const now = Date.now();
+                if (now - lastTap < 300) {
+                    const isL = s.likes && s.likes.includes(currentUser.uid);
+                    toggleStoryLike(s.id, isL);
+                    
+                    const r = mediaContainer.getBoundingClientRect(); const h = document.createElement('div');
+                    h.className = 'like-animation'; 
+                    h.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" fill="#ed4956" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                    h.style.left = (e.clientX - r.left) + 'px'; h.style.top = (e.clientY - r.top) + 'px';
+                    mediaContainer.appendChild(h); setTimeout(() => h.remove(), 600);
+                } else {
+                    if (e.clientX < window.innerWidth / 2) prevStory(); else nextStory();
                 }
-            }
+                lastTap = now;
+            };
             
             viewedStories[s.id] = true;
-            
             if(!isMySt && s.id) {
                 if(!s.viewers) s.viewers = [];
                 if(!s.viewers.includes(currentUser.uid)) updateDoc(doc(db, "stories", s.id), { viewers: arrayUnion(currentUser.uid) });
@@ -1852,47 +1895,34 @@
             
             const pC = document.getElementById('story-progress-container'); pC.innerHTML = '';
             for(let i=0; i < actStArr.length; i++) { 
-                const isViewed = i < actStoryIdx || (i === actStoryIdx && s.id ? viewedStories[s.id] : false);
                 pC.innerHTML += `<div class="story-progress-bar"><div class="story-progress-fill" id="fill-${i}" style="width:${i < actStoryIdx ? '100%' : '0%'};"></div></div>`; 
             }
             
             setTimeout(() => { 
                 if(document.getElementById(`fill-${actStoryIdx}`)) { 
-                    document.getElementById(`fill-${actStoryIdx}`).style.transition = 'width 5s linear'; 
+                    const len = (document.getElementById('current-story-video') || document.getElementById('current-story-audio')) ? 15 : 5;
+                    document.getElementById(`fill-${actStoryIdx}`).style.transition = `width ${len}s linear`; 
                     document.getElementById(`fill-${actStoryIdx}`).style.width = '100%'; 
                 } 
             }, 50);
             
-            clearTimeout(stTime); 
-            stTime = setTimeout(() => nextStory(), 5000);
+            clearTimeout(stTime);
+            const vid = document.getElementById('current-story-video');
+            const aud = document.getElementById('current-story-audio');
+            if (vid) { vid.onended = nextStory; } else if (aud) { aud.onended = nextStory; } else { stTime = setTimeout(() => nextStory(), 5000); }
         }
 
         window.nextStory = () => { 
-            if(actStoryIdx < actStArr.length - 1) { 
-                actStoryIdx++; renderStoryMedia(); 
-            } 
+            if(actStoryIdx < actStArr.length - 1) { actStoryIdx++; renderStoryMedia(); } 
             else { 
-                actStArr.forEach(s => { viewedStories[s.id] = true; }); 
-                
-                // Logic to jump to the next user's story seamlessly
                 if (!isMySt) {
-                    const sortedUsers = Object.keys(groupedStories).sort((a, b) => {
-                        const aViewed = groupedStories[a].every(s => hasViewedStory(s.id));
-                        const bViewed = groupedStories[b].every(s => hasViewedStory(s.id));
-                        if (aViewed && !bViewed) return 1;
-                        if (!aViewed && bViewed) return -1;
-                        return 0;
-                    });
-                    
+                    const sortedUsers = Object.keys(groupedStories);
                     const currentIdx = sortedUsers.indexOf(actStoryU);
                     if (currentIdx !== -1 && currentIdx < sortedUsers.length - 1) {
                         for(let i = currentIdx + 1; i < sortedUsers.length; i++) {
                             const nextUser = sortedUsers[i];
                             const hasUnviewed = groupedStories[nextUser].some(s => !hasViewedStory(s.id));
-                            if (hasUnviewed) {
-                                startStoryViewer(nextUser, false);
-                                return; // Auto navigated to next user
-                            }
+                            if (hasUnviewed) { startStoryViewer(nextUser, false); return; }
                         }
                     }
                 }
@@ -1901,40 +1931,21 @@
         };
         window.prevStory = () => { if(actStoryIdx > 0) { actStoryIdx--; renderStoryMedia(); } else renderStoryMedia(); };
         window.closeStoryViewer = () => { 
-            clearTimeout(stTime); 
-            const a = document.getElementById('current-story-audio'); 
-            if(a) { a.pause(); a.currentTime = 0; }
-            document.getElementById('story-viewer').classList.add('hidden'); 
-            document.getElementById('story-media-container').innerHTML = '';
-            renderStoryBar();
+            clearTimeout(stTime); const a = document.getElementById('current-story-audio'); if(a) { a.pause(); a.currentTime = 0; }
+            document.getElementById('story-viewer').classList.add('hidden'); document.getElementById('story-media-container').innerHTML = ''; renderStoryBar();
         };
 
-        // --- STORY SWIPE LOGIC (Left / Right swipe to change story) ---
-        let touchstartX = 0;
-        let touchendX = 0;
+        // Swipe logic for stories
+        let touchstartX = 0, touchendX = 0;
         const storyViewerObj = document.getElementById('story-viewer');
-        
-        storyViewerObj.addEventListener('touchstart', function(event) {
-            touchstartX = event.changedTouches[0].screenX;
-        }, false);
-        
-        storyViewerObj.addEventListener('touchend', function(event) {
-            touchendX = event.changedTouches[0].screenX;
-            handleStorySwipe();
+        storyViewerObj.addEventListener('touchstart', (e) => touchstartX = e.changedTouches[0].screenX, false);
+        storyViewerObj.addEventListener('touchend', (e) => {
+            touchendX = e.changedTouches[0].screenX;
+            if (touchendX < touchstartX - 60) nextStory();
+            if (touchendX > touchstartX + 60) prevStory();
         }, false); 
-        
-        function handleStorySwipe() {
-            // Check if swiped left (User drags finger from right to left) -> Next Story
-            if (touchendX < touchstartX - 60) {
-                nextStory();
-            }
-            // Check if swiped right (User drags finger from left to right) -> Previous Story
-            if (touchendX > touchstartX + 60) {
-                prevStory();
-            }
-        }
 
-        window.toggleStoryLike = async (id, isL) => { if(isL) await updateDoc(doc(db, "stories", id), { likes: arrayRemove(currentUser.uid) }); else await updateDoc(doc(db, "stories", id), { likes: arrayUnion(currentUser.uid) }); showToast("Liked!"); };
+        window.toggleStoryLike = async (id, isL) => { if(isL) await updateDoc(doc(db, "stories", id), { likes: arrayRemove(currentUser.uid) }); else await updateDoc(doc(db, "stories", id), { likes: arrayUnion(currentUser.uid) }); };
         window.handleStoryReply = async (e, id) => {
             if(e.key === 'Enter') {
                 const t = e.target.value.trim(); if(t) {
@@ -1956,194 +1967,8 @@
             document.getElementById('story-viewers-modal').classList.remove('hidden');
         };
 
-      // ============================================================
-      // ADMIN AUDIO UPLOAD SYSTEM (অ্যাডমিন প্যানেল থেকে অডিও আপলোড)
-      // ============================================================
-      (function addAudioUploadToAdminPanel() {
-          const observer = new MutationObserver(() => {
-              const adminList = document.getElementById('admin-user-list');
-              if (adminList && !document.getElementById('admin-audio-upload-section')) {
-                  const audioSection = document.createElement('div');
-                  audioSection.id = 'admin-audio-upload-section';
-                  audioSection.style.cssText = `background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);`;
-                  audioSection.innerHTML = `
-                      <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;"><i class="fas fa-music" style="color: #0095f6;"></i> Audio Library Upload</h3>
-                      <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">এখান থেকে অডিও আপলোড করলে সেগুলো অ্যাপের মিউজিক সিলেকশন পেজে চলে যাবে।</p>
-                      <input type="text" id="admin-audio-name" placeholder="Song Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
-                      <input type="text" id="admin-audio-artist" placeholder="Artist Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
-                      <input type="file" id="admin-audio-file" accept="audio/*" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #fafafa;">
-                      <button id="admin-audio-upload-btn" class="publish-btn" style="width: 100%; padding: 12px; background: #0095f6; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;"><i class="fas fa-cloud-upload-alt"></i> Upload Audio</button>
-                      <div id="admin-audio-list" style="margin-top: 15px;"></div>
-                  `;
-                  adminList.parentNode.insertBefore(audioSection, adminList);
-                  document.getElementById('admin-audio-upload-btn').addEventListener('click', uploadAdminAudio);
-                  loadAdminAudioList();
-              }
-          });
-          observer.observe(document.body, { childList: true, subtree: true });
-      })();
-
-      async function uploadAdminAudio() {
-          const nameInput = document.getElementById('admin-audio-name');
-          const artistInput = document.getElementById('admin-audio-artist');
-          const fileInput = document.getElementById('admin-audio-file');
-          
-          const name = nameInput.value.trim();
-          const artist = artistInput.value.trim() || 'Unknown Artist';
-          const file = fileInput.files[0];
-          
-          if (!name) return showToast('অনুগ্রহ করে গানের নাম দিন');
-          if (!file) return showToast('অনুগ্রহ করে একটি অডিও ফাইল নির্বাচন করুন');
-          if (!file.type.startsWith('audio/')) return showToast('শুধুমাত্র অডিও ফাইল আপলোড করুন');
-          
-          const overlay = document.getElementById('upload-progress-overlay');
-          const bar = document.getElementById('upload-progress-bar');
-          const txt = document.getElementById('upload-progress-text');
-          const stat = document.getElementById('progress-status-text');
-          
-          overlay.classList.remove('hidden');
-          stat.innerText = "Uploading Audio..."; bar.style.width = "0%"; txt.innerText = "0%";
-          
-          try {
-              const data = await uploadWithProgress(file, "Insta Story", (pct) => { bar.style.width = pct + "%"; txt.innerText = pct + "%"; });
-              await addDoc(collection(db, "admin_audio"), { name: name, artist: artist, url: data.secure_url, uploadedBy: currentUser.uid, timestamp: serverTimestamp() });
-              showToast('✅ অডিও সফলভাবে আপলোড হয়েছে!');
-              nameInput.value = ''; artistInput.value = ''; fileInput.value = '';
-              loadAdminAudioList();
-          } catch (e) { console.error(e); showToast('❌ অডিও আপলোড ব্যর্থ হয়েছে'); }
-          overlay.classList.add('hidden');
-      }
-
-      async function loadAdminAudioList() {
-          const listContainer = document.getElementById('admin-audio-list');
-          if (!listContainer) return;
-          listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e;">Loading...</p>';
-          try {
-              const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
-              listContainer.innerHTML = '';
-              if (snap.empty) { listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e; text-align: center;">কোনো অডিও আপলোড করা হয়নি।</p>'; return; }
-              snap.forEach((docSnap) => {
-                  const audio = docSnap.data(); const audioId = docSnap.id;
-                  const div = document.createElement('div');
-                  div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; gap: 10px;`;
-                  div.innerHTML = `<div style="flex: 1; overflow: hidden;"><div style="font-size: 13px; font-weight: 600; color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${audio.name}</div><div style="font-size: 11px; color: #8e8e8e;">${audio.artist}</div></div><audio src="${audio.url}" controls style="height: 30px; width: 120px;"></audio><button onclick="deleteAdminAudio('${audioId}')" style="background: #dc3545; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer;"><i class="fas fa-trash"></i></button>`;
-                  listContainer.appendChild(div);
-              });
-          } catch (e) { console.error(e); listContainer.innerHTML = '<p style="font-size: 12px; color: #dc3545;">লোড করতে সমস্যা হয়েছে।</p>'; }
-      }
-
-      window.deleteAdminAudio = (audioId) => { window.openProConfirm("এই অডিওটি ডিলিট করতে চান?", async () => { try { await deleteDoc(doc(db, "admin_audio", audioId)); showToast('🗑️ অডিও ডিলিট হয়েছে'); loadAdminAudioList(); } catch (e) { showToast('ডিলিট করতে সমস্যা হয়েছে'); } }); };
-
-      const originalOpenMusicModal = window.openMusicModal;
-      window.openMusicModal = async function() {
-          const container = document.getElementById('music-list-container');
-          container.innerHTML = '<p style="text-align:center; color:#8e8e8e; padding:20px;">Loading...</p>';
-          try {
-              const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
-              let adminAudioHtml = '';
-              if (!snap.empty) {
-                  adminAudioHtml += `<div style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #0095f6; border-bottom: 1px solid #efefef; margin-bottom: 8px;"><i class="fas fa-crown"></i> Admin Uploaded</div>`;
-                  snap.forEach((docSnap) => {
-                      const audio = docSnap.data();
-                      adminAudioHtml += `<div class="music-item" onclick="selectMusic('${audio.url}', '${audio.name.replace(/'/g, "\\'")}')"><div class="music-info"><div class="music-icon" style="background: linear-gradient(45deg, #0095f6, #00c6ff);"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${audio.name}</div><div style="font-size:12px; color:#8e8e8e;">${audio.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
-                  });
-              }
-              let defaultHtml = `<div style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #8e8e8e; border-bottom: 1px solid #efefef; margin-bottom: 8px; margin-top: 10px;"><i class="fas fa-globe"></i> Default Library</div>`;
-              cloudMusicLibrary.forEach(m => {
-                  defaultHtml += `<div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')"><div class="music-info"><div class="music-icon"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${m.name}</div><div style="font-size:12px; color:#8e8e8e;">${m.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
-              });
-              container.innerHTML = adminAudioHtml + defaultHtml;
-          } catch (e) {
-              console.error(e);
-              let defaultHtml = '';
-              cloudMusicLibrary.forEach(m => { defaultHtml += `<div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')"><div class="music-info"><div class="music-icon"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${m.name}</div><div style="font-size:12px; color:#8e8e8e;">${m.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`; });
-              container.innerHTML = defaultHtml;
-          }
-          document.getElementById('music-modal').classList.remove('hidden');
-      };
-
-      const originalFilterMusic = window.filterMusic;
-      window.filterMusic = async function(q) {
-          const queryStr = q.toLowerCase();
-          const container = document.getElementById('music-list-container');
-          container.innerHTML = '<p style="text-align:center; color:#8e8e8e; padding:10px;">Searching...</p>';
-          try {
-              const snap = await getDocs(collection(db, "admin_audio"));
-              let html = '';
-              snap.forEach((docSnap) => {
-                  const audio = docSnap.data();
-                  if (audio.name.toLowerCase().includes(queryStr) || audio.artist.toLowerCase().includes(queryStr)) {
-                      html += `<div class="music-item" onclick="selectMusic('${audio.url}', '${audio.name.replace(/'/g, "\\'")}')"><div class="music-info"><div class="music-icon" style="background: linear-gradient(45deg, #0095f6, #00c6ff);"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${audio.name}</div><div style="font-size:12px; color:#8e8e8e;">${audio.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
-                  }
-              });
-              cloudMusicLibrary.filter(m => m.name.toLowerCase().includes(queryStr) || m.artist.toLowerCase().includes(queryStr)).forEach(m => {
-                  html += `<div class="music-item" onclick="selectMusic('${m.url}', '${m.name}')"><div class="music-info"><div class="music-icon"><i class="fas fa-music"></i></div><div><div style="font-weight:600; font-size:14px;">${m.name}</div><div style="font-size:12px; color:#8e8e8e;">${m.artist}</div></div></div><i class="fas fa-play-circle" style="font-size:24px; color:#0095f6;"></i></div>`;
-              });
-              container.innerHTML = html || '<p style="text-align:center; color:#8e8e8e; padding:20px;">কোনো মিউজিক পাওয়া যায়নি।</p>';
-          } catch (e) { console.error(e); container.innerHTML = '<p style="text-align:center; color:#dc3545; padding:20px;">সার্চ করতে সমস্যা হয়েছে।</p>'; }
-      };
-
-      const originalLoadAdminPanel = window.loadAdminPanel;
-      window.loadAdminPanel = async function() {
-          await originalLoadAdminPanel();
-          setTimeout(() => { if (document.getElementById('admin-audio-list')) { loadAdminAudioList(); } }, 500);
-      };
-      
-      // ============================================================
-      // SHORTCUT LOGOUT BUTTON (প্রোফাইল পেজে লগ আউট বাটন)
-      // ============================================================
-      (function addLogoutButton() {
-          const observer = new MutationObserver(() => {
-              const container = document.getElementById('profile-action-container');
-              if (container && !document.getElementById('shortcut-logout-btn')) {
-                  const logoutBtn = document.createElement('button');
-                  logoutBtn.id = 'shortcut-logout-btn';
-                  logoutBtn.className = 'action-btn';
-                  logoutBtn.style.cssText = 'background:#dc3545; color:#fff; border:none; font-weight:600;';
-                  logoutBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Log Out';
-                  logoutBtn.onclick = () => { window.openProConfirm("Log Out of Insta Story?", () => { signOut(auth).then(() => { window.location.reload(); }); }); };
-                  container.appendChild(logoutBtn);
-              }
-          });
-          observer.observe(document.body, { childList: true, subtree: true });
-      })();
-            // ============================================================
-      // 1 POST PER DAY LIMIT (একদিনে সর্বোচ্চ ১টি পোস্ট)
-      // ============================================================
-      const originalPublish = window.publishMedia;
-      window.publishMedia = async function() {
-          if (upType === 'post' && currentUser) {
-              const todayStr = new Date().toDateString();
-              let todaysPostCount = 0;
-              
-              allPosts.forEach(p => {
-                  if (p.uid === currentUser.uid && p.timestamp) {
-                      let postDateStr = "";
-                      if (p.timestamp.toMillis) {
-                          postDateStr = new Date(p.timestamp.toMillis()).toDateString();
-                      } else if (p.timestamp.seconds) {
-                          postDateStr = new Date(p.timestamp.seconds * 1000).toDateString();
-                      } else {
-                          postDateStr = new Date(p.timestamp).toDateString();
-                      }
-                      if (postDateStr === todayStr) {
-                          todaysPostCount++;
-                      }
-                  }
-              });
-
-              // এখানে 5 এর জায়গায় 1 করে দেওয়া হয়েছে
-              if (todaysPostCount >= 1) {
-                  showToast("⚠️ আপনি একদিনে সর্বোচ্চ ১টি পোস্ট আপলোড করতে পারবেন!");
-                  document.getElementById('preview-modal').classList.add('hidden');
-                  document.getElementById("mediaFile").value = "";
-                  selFile = null;
-                  return;
-              }
-          }
-          await originalPublish.apply(this, arguments);
-      };
-
     </script>
+    <!-- Adsterra Main Script (Loaded once at the end of body) -->
+    <script async="async" data-cfasync="false" src="//pl31355821.profitablecpmnetwork.com/2425ef7a251ef180c0d2a5d9961fab3e/invoke.js"></script>
 </body>
 </html>
