@@ -483,16 +483,32 @@
             </div>
 
             <div id="admin-sec-audio" class="admin-sec" style="padding: 15px; display: none;">
-                <div style="background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;"><i class="fas fa-music" style="color: #0095f6;"></i> Audio Library Upload</h3>
-                    <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">এখান থেকে অডিও আপলোড করলে সেগুলো অ্যাপের মিউজিক সিলেকশন পেজে চলে যাবে।</p>
-                    <input type="text" id="admin-audio-name" placeholder="Song Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
-                    <input type="text" id="admin-audio-artist" placeholder="Artist Name" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
-                    <input type="file" id="admin-audio-file" accept="audio/*" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #fafafa;">
-                    <button id="admin-audio-upload-btn" class="publish-btn" onclick="uploadAdminAudio()" style="width: 100%; padding: 12px; background: #0095f6; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;"><i class="fas fa-cloud-upload-alt"></i> Upload Audio</button>
-                    <div id="admin-audio-list" style="margin-top: 15px;"></div>
-                </div>
-            </div>
+    <div style="background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;"><i class="fas fa-music" style="color: #0095f6;"></i> Audio Library Upload</h3>
+        <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">এখান থেকে একসাথে একাধিক অডিও আপলোড করতে পারবেন। ফাইলের নামই স্বয়ংক্রিয়ভাবে গানের নাম হিসেবে সেভ হবে।</p>
+        <input type="text" id="admin-audio-artist" placeholder="Artist Name (Default for all)" style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; outline: none;">
+        <input type="file" id="admin-audio-file" accept="audio/*" multiple style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #fafafa;">
+        <button id="admin-audio-upload-btn" class="publish-btn" onclick="uploadAdminAudio()" style="width: 100%; padding: 12px; background: #0095f6; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; margin-bottom: 10px;"><i class="fas fa-cloud-upload-alt"></i> Upload Selected Audio(s)</button>
+        
+        <hr style="border:0; border-top:1px solid #efefef; margin: 15px 0;">
+        
+        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #262626;"><i class="fas fa-random" style="color: #f09433;"></i> Replace Post Songs</h3>
+        <p style="font-size: 12px; color: #8e8e8e; margin-bottom: 12px;">অ্যাপের সমস্ত পোস্টের গানগুলো এক ক্লিকে রেনডমলি পরিবর্তন করুন (শুধুমাত্র অ্যাডমিন অডিও থেকে)।</p>
+        <button onclick="randomlyReplaceAllPostSongs()" style="width: 100%; padding: 12px; background: linear-gradient(45deg, #f09433, #dc2743); color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;"><i class="fas fa-sync-alt"></i> Randomly Replace All Post Songs</button>
+    </div>
+    
+    <div style="background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #262626;">Uploaded Audios</h3>
+            <button onclick="deleteSelectedAudios()" style="background: #dc3545; color: #fff; border: none; border-radius: 6px; padding: 8px 12px; font-size: 12px; cursor: pointer;"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <input type="checkbox" id="selectAllAudios" onchange="toggleSelectAllAudios(this)" style="margin-right: 5px;"> <label for="selectAllAudios" style="font-size:13px; font-weight:600; cursor:pointer;">Select All</label>
+        </div>
+        <div id="admin-audio-list"></div>
+    </div>
+</div>
+
         </div>
 
         <div id="creator-hub-page" class="page" style="background: #fafafa;">
@@ -2268,57 +2284,146 @@
             document.getElementById('btn-admin-' + sec).classList.add('primary');
         };
 
-        window.uploadAdminAudio = async () => {
-            const nameInput = document.getElementById('admin-audio-name');
-            const artistInput = document.getElementById('admin-audio-artist');
-            const fileInput = document.getElementById('admin-audio-file');
-            
-            const name = nameInput.value.trim();
-            const artist = artistInput.value.trim() || 'Unknown Artist';
-            const file = fileInput.files[0];
-            
-            if (!name) return showToast('অনুগ্রহ করে গানের নাম দিন');
-            if (!file) return showToast('অনুগ্রহ করে একটি অডিও ফাইল নির্বাচন করুন');
-            if (!file.type.startsWith('audio/')) return showToast('শুধুমাত্র অডিও ফাইল আপলোড করুন');
-            
-            const overlay = document.getElementById('upload-progress-overlay');
-            const bar = document.getElementById('upload-progress-bar');
-            const txt = document.getElementById('upload-progress-text');
-            const stat = document.getElementById('progress-status-text');
-            
-            overlay.classList.remove('hidden');
-            stat.innerText = "Uploading Audio..."; bar.style.width = "0%"; txt.innerText = "0%";
-            
-            try {
-                const data = await uploadWithProgress(file, "Insta Story", (pct) => { bar.style.width = pct + "%"; txt.innerText = pct + "%"; });
-                await addDoc(collection(db, "admin_audio"), { name: name, artist: artist, url: data.secure_url, uploadedBy: currentUser.uid, timestamp: serverTimestamp() });
-                showToast('✅ অডিও সফলভাবে আপলোড হয়েছে!');
-                nameInput.value = ''; artistInput.value = ''; fileInput.value = '';
-                window.loadAdminAudioList();
-            } catch (e) { console.error(e); showToast('❌ অডিও আপলোড ব্যর্থ হয়েছে'); }
-            overlay.classList.add('hidden');
-        };
+window.uploadAdminAudio = async () => {
+    const artistInput = document.getElementById('admin-audio-artist');
+    const fileInput = document.getElementById('admin-audio-file');
+    
+    const artist = artistInput.value.trim() || 'Unknown Artist';
+    const files = fileInput.files;
+    
+    if (files.length === 0) return showToast('অনুগ্রহ করে অন্তত একটি অডিও ফাইল নির্বাচন করুন');
+    
+    const overlay = document.getElementById('upload-progress-overlay');
+    const bar = document.getElementById('upload-progress-bar');
+    const txt = document.getElementById('upload-progress-text');
+    const stat = document.getElementById('progress-status-text');
+    
+    overlay.classList.remove('hidden');
+    stat.innerText = `Uploading ${files.length} Audio(s)...`; 
+    bar.style.width = "0%"; txt.innerText = "0%";
+    
+    let successCount = 0;
+    
+    for(let i = 0; i < files.length; i++) {
+        let file = files[i];
+        if (!file.type.startsWith('audio/')) continue;
+        
+        let fileName = file.name.replace(/\.[^/.]+$/, ""); 
+        
+        try {
+            const data = await uploadWithProgress(file, "Insta Story", (pct) => { 
+                let overallPct = Math.round(((i * 100) + pct) / files.length);
+                bar.style.width = overallPct + "%"; txt.innerText = overallPct + "%"; 
+            });
+            await addDoc(collection(db, "admin_audio"), { name: fileName, artist: artist, url: data.secure_url, uploadedBy: currentUser.uid, timestamp: serverTimestamp() });
+            successCount++;
+        } catch (e) { console.error("Failed to upload " + fileName); }
+    }
+    
+    overlay.classList.add('hidden');
+    if(successCount > 0) {
+        showToast(`✅ ${successCount} টি অডিও সফলভাবে আপলোড হয়েছে!`);
+        artistInput.value = ''; fileInput.value = '';
+        window.loadAdminAudioList();
+    } else {
+        showToast('❌ আপলোড ব্যর্থ হয়েছে');
+    }
+};
 
-        window.loadAdminAudioList = async () => {
-            const listContainer = document.getElementById('admin-audio-list');
-            if (!listContainer) return;
-            listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e;">Loading...</p>';
-            try {
-                const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
-                listContainer.innerHTML = '';
-                if (snap.empty) { listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e; text-align: center;">কোনো অডিও আপলোড করা হয়নি।</p>'; return; }
-                snap.forEach((docSnap) => {
-                    const audio = docSnap.data(); const audioId = docSnap.id;
-                    const div = document.createElement('div');
-                    div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; gap: 10px;`;
-                    div.innerHTML = `<div style="flex: 1; overflow: hidden;"><div style="font-size: 13px; font-weight: 600; color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${audio.name}</div><div style="font-size: 11px; color: #8e8e8e;">${audio.artist}</div></div><audio src="${audio.url}" controls style="height: 30px; width: 120px;"></audio><button onclick="window.deleteAdminAudio('${audioId}')" style="background: #dc3545; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer;"><i class="fas fa-trash"></i></button>`;
-                    listContainer.appendChild(div);
+window.loadAdminAudioList = async () => {
+    const listContainer = document.getElementById('admin-audio-list');
+    if (!listContainer) return;
+    listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e;">Loading...</p>';
+    try {
+        const snap = await getDocs(query(collection(db, "admin_audio"), orderBy("timestamp", "desc")));
+        listContainer.innerHTML = '';
+        if (snap.empty) { listContainer.innerHTML = '<p style="font-size: 12px; color: #8e8e8e; text-align: center;">কোনো অডিও আপলোড করা হয়নি।</p>'; return; }
+        snap.forEach((docSnap) => {
+            const audio = docSnap.data(); const audioId = docSnap.id;
+            const div = document.createElement('div');
+            div.style.cssText = `display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; gap: 10px;`;
+            div.innerHTML = `
+                <input type="checkbox" class="admin-audio-checkbox" value="${audioId}" style="width:16px; height:16px; flex-shrink:0;">
+                <div style="flex: 1; overflow: hidden;"><div style="font-size: 13px; font-weight: 600; color: #262626; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${audio.name}</div><div style="font-size: 11px; color: #8e8e8e;">${audio.artist}</div></div>
+                <audio src="${audio.url}" controls style="height: 30px; width: 120px; flex-shrink:0;"></audio>
+                <button onclick="window.deleteAdminAudio('${audioId}')" style="background: #dc3545; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; flex-shrink:0;"><i class="fas fa-trash"></i></button>`;
+            listContainer.appendChild(div);
+        });
+    } catch (e) { console.error(e); listContainer.innerHTML = '<p style="font-size: 12px; color: #dc3545;">লোড করতে সমস্যা হয়েছে।</p>'; }
+};
+
+window.deleteAdminAudio = (audioId) => { window.openProConfirm("এই অডিওটি ডিলিট করতে চান?", async () => { try { await deleteDoc(doc(db, "admin_audio", audioId)); showToast('🗑️ অডিও ডিলিট হয়েছে'); window.loadAdminAudioList(); } catch (e) { showToast('ডিলিট করতে সমস্যা হয়েছে'); } }); };
+
+window.toggleSelectAllAudios = (checkbox) => {
+    document.querySelectorAll('.admin-audio-checkbox').forEach(cb => cb.checked = checkbox.checked);
+};
+
+window.deleteSelectedAudios = () => {
+    const selected = Array.from(document.querySelectorAll('.admin-audio-checkbox:checked')).map(cb => cb.value);
+    if (selected.length === 0) return showToast("অন্তত একটি অডিও সিলেক্ট করুন!");
+    
+    window.openProConfirm(`${selected.length} টি অডিও ডিলিট করতে চান?`, async () => { 
+        document.getElementById('global-loader').classList.remove('hidden');
+        document.getElementById('loader-text').innerText = "Deleting...";
+        try { 
+            for (let id of selected) {
+                await deleteDoc(doc(db, "admin_audio", id)); 
+            }
+            showToast(`🗑️ ${selected.length} টি অডিও ডিলিট হয়েছে`); 
+            document.getElementById('selectAllAudios').checked = false;
+            window.loadAdminAudioList(); 
+        } catch (e) { showToast('ডিলিট করতে সমস্যা হয়েছে'); } 
+        document.getElementById('global-loader').classList.add('hidden');
+    });
+};
+
+window.randomlyReplaceAllPostSongs = async () => {
+    window.openProConfirm("অ্যাপের সমস্ত পোস্টের গান রেনডমলি পরিবর্তন করতে চান?", async () => {
+        document.getElementById('global-loader').classList.remove('hidden');
+        document.getElementById('loader-text').innerText = "Fetching Audio Library...";
+        try {
+            const audioSnap = await getDocs(collection(db, "admin_audio"));
+            if(audioSnap.empty) {
+                document.getElementById('global-loader').classList.add('hidden');
+                return showToast("অ্যাডমিন প্যানেলে কোনো গান নেই! আগে গান আপলোড করুন।");
+            }
+            
+            const adminAudios = [];
+            audioSnap.forEach(doc => adminAudios.push(doc.data()));
+            
+            document.getElementById('loader-text').innerText = "Replacing Songs...";
+            
+            const postSnap = await getDocs(collection(db, "posts"));
+            const updatePromises = [];
+            
+            postSnap.forEach(postDoc => {
+                const randomAudio = adminAudios[Math.floor(Math.random() * adminAudios.length)];
+                const updatePromise = updateDoc(doc(db, "posts", postDoc.id), {
+                    musicUrl: randomAudio.url,
+                    musicName: randomAudio.name
                 });
-            } catch (e) { console.error(e); listContainer.innerHTML = '<p style="font-size: 12px; color: #dc3545;">লোড করতে সমস্যা হয়েছে।</p>'; }
-        };
+                updatePromises.push(updatePromise);
+                
+                const pIdx = allPosts.findIndex(p => p.id === postDoc.id);
+                if(pIdx !== -1) {
+                    allPosts[pIdx].musicUrl = randomAudio.url;
+                    allPosts[pIdx].musicName = randomAudio.name;
+                }
+            });
+            
+            await Promise.all(updatePromises);
+            
+            showToast(`✅ ${updatePromises.length} টি পোস্টের গান পরিবর্তন হয়েছে!`);
+            renderHomeFeed(); 
+        } catch(e) {
+            console.error(e);
+            showToast("গান রিপ্লেস করতে সমস্যা হয়েছে!");
+        }
+        document.getElementById('global-loader').classList.add('hidden');
+    });
+};
 
-        window.deleteAdminAudio = (audioId) => { window.openProConfirm("এই অডিওটি ডিলিট করতে চান?", async () => { try { await deleteDoc(doc(db, "admin_audio", audioId)); showToast('🗑️ অডিও ডিলিট হয়েছে'); window.loadAdminAudioList(); } catch (e) { showToast('ডিলিট করতে সমস্যা হয়েছে'); } }); };
-
+      
         window.loadAdminPanel = async () => {
             const list = document.getElementById('admin-user-list');
             const vList = document.getElementById('admin-verification-list');
@@ -2483,19 +2588,11 @@
     </script>
 
     <script>
-        document.addEventListener('change', function(e) {
-            if (e.target && e.target.id === 'admin-audio-file') {
-                const file = e.target.files[0];
-                if (file) {
-                    const fileName = file.name.replace(/\.[^/.]+$/, ""); 
-                    const nameInput = document.getElementById('admin-audio-name');
-                    if (nameInput && nameInput.value.trim() === '') {
-                        nameInput.value = fileName; 
-                    }
-                }
-            }
-        });
-    </script>
+    document.addEventListener('change', function(e) {
+        // এই সম্পূর্ণ ব্লকটি মুছে ফেলুন
+    });
+</script>
+
 
     <!-- ADMIN MEMBERSHIP DYNAMIC SCRIPT -->
     <script type="module">
