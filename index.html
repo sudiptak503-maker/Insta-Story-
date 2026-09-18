@@ -2767,6 +2767,480 @@ window.randomlyReplaceAllPostSongs = async () => {
     </script>
 </body>
 </html>
+<!-- ==========================================================
+     REELS AUDIO, DOUBLE-TAP, INSTANT LIKE & DELETE PATCH
+     ========================================================== -->
+<style>
+    /* Reels Feed CSS */
+    .header-reel-btn { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 10px rgba(220, 39, 67, 0.4); transition: 0.2s;}
+    .header-reel-btn:active { transform: scale(0.95); }
+    #reels-feed-container { height: calc(100vh - 50px); overflow-y: scroll; scroll-snap-type: y mandatory; background: #000; scrollbar-width: none; }
+    #reels-feed-container::-webkit-scrollbar { display: none; }
+    .reel-item { height: 100%; width: 100%; scroll-snap-align: start; position: relative; }
+    .reel-video { width: 100%; height: 100%; object-fit: cover; background: #111; }
+    .reel-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 10px 70px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); display: flex; justify-content: space-between; align-items: flex-end; z-index: 10; color: white; pointer-events: none;}
+    .reel-overlay * { pointer-events: auto; }
+    .reel-info { flex: 1; padding-right: 20px; }
+    .reel-user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+    .reel-user img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; object-fit: cover;}
+    .reel-follow-btn { background: transparent; border: 1px solid #fff; color: #fff; padding: 4px 12px; border-radius: 15px; font-size: 11px; cursor: pointer; font-weight: 600; transition: 0.2s;}
+    .reel-actions { display: flex; flex-direction: column; gap: 20px; align-items: center; padding-bottom: 10px;}
+    .reel-action-btn { display: flex; flex-direction: column; align-items: center; font-size: 26px; cursor: pointer; text-shadow: 0 2px 5px rgba(0,0,0,0.8); transition: transform 0.1s;}
+    .reel-action-btn span { font-size: 12px; margin-top: 5px; font-weight: 600;}
+    
+    /* Double Tap & Volume Animations */
+    .reel-volume-indicator { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.6); color: #fff; width: 65px; height: 65px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; opacity: 0; pointer-events: none; z-index: 15; transition: opacity 0.3s; }
+    .reel-volume-indicator.show { opacity: 1; }
+    .like-animation { position: absolute; width: 90px; height: 90px; transform: translate(-50%, -50%) scale(0); animation: heartPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: none; z-index: 20; filter: drop-shadow(0 0 15px rgba(237, 73, 86, 0.9)); }
+    @keyframes heartPop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+
+    /* Profile Tabs */
+    .profile-tabs { display: flex; border-top: 1px solid #dbdbdb; background: #fff; margin-top: 10px;}
+    .profile-tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-size: 22px; color: #8e8e8e; border-bottom: 2px solid transparent; transition: 0.2s;}
+    .profile-tab.active { color: #262626; border-bottom: 2px solid #262626; }
+</style>
+
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // Cloudinary Setup
+    const originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url) {
+        if (url && url.includes('api.cloudinary.com')) { url = 'https://api.cloudinary.com/v1_1/dzt2shn4m/auto/upload'; }
+        return originalOpen.apply(this, arguments);
+    };
+    const originalSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function(body) {
+        if (body instanceof FormData && body.has('upload_preset')) { body.set('upload_preset', 'Instaastory'); }
+        return originalSend.apply(this, arguments);
+    };
+
+    window.isReelsMuted = true;
+
+    // Setup UI Components
+    (function setupReelsUI() {
+        const topBarRight = document.querySelector('#home-page .top-bar div');
+        if (topBarRight && !document.querySelector('.header-reel-btn')) {
+            const oldReelIcon = topBarRight.querySelector('.fa-clapperboard');
+            if (oldReelIcon) oldReelIcon.remove();
+            const newReelBtn = document.createElement('div');
+            newReelBtn.className = 'header-reel-btn';
+            newReelBtn.innerHTML = '<i class="fa-solid fa-play"></i> Reel';
+            newReelBtn.onclick = () => window.navigateTo('reels');
+            topBarRight.prepend(newReelBtn);
+        }
+
+        const reelsPage = document.getElementById('reels-page');
+        if(reelsPage) {
+            reelsPage.innerHTML = `
+                <div class="top-bar" style="background:transparent; position:absolute; z-index:100; width:100%; border:none; color:white;">
+                    <h2 style="color:white; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">Reels</h2>
+                </div>
+                <div id="reels-feed-container"></div>
+            `;
+        }
+
+        const postsGrid = document.getElementById('profile-posts');
+        if(postsGrid && !document.getElementById('custom-profile-tabs')) {
+            const tabsHtml = `
+                <div class="profile-tabs" id="custom-profile-tabs">
+                    <div class="profile-tab active" id="tab-posts" onclick="window.switchProfileTab('posts')"><i class="fa-solid fa-table-cells"></i></div>
+                    <div class="profile-tab" id="tab-reels" onclick="window.switchProfileTab('reels')"><i class="fa-solid fa-film"></i></div>
+                </div>
+                <div class="profile-grid hidden" id="profile-reels"></div>
+            `;
+            postsGrid.insertAdjacentHTML('beforebegin', tabsHtml);
+        }
+
+        const uploadMenu = document.querySelector('#upload-menu-modal .modal-content');
+        if(uploadMenu && !uploadMenu.innerHTML.includes('Upload Reel')) {
+            const fileInput = document.getElementById('mediaFile');
+            const reelBtn = document.createElement('button');
+            reelBtn.className = 'modal-option-btn';
+            reelBtn.innerHTML = '<i class="fa-solid fa-film" style="color:#e1306c;"></i> Upload Reel';
+            reelBtn.onclick = () => {
+                window.upType = 'reel';
+                document.getElementById('upload-menu-modal').classList.add('hidden');
+                fileInput.accept = 'video/*';
+                fileInput.click();
+            };
+            uploadMenu.insertBefore(reelBtn, fileInput);
+        }
+
+        if (!document.getElementById('reel-comments-modal')) {
+            const reelModalHtml = `
+            <div id="reel-comments-modal" class="modal-overlay hidden" onclick="if(event.target.classList.contains('modal-overlay')) this.classList.add('hidden')">
+                <div class="modal-content" style="height: 70vh; display:flex; flex-direction:column; padding:0;">
+                    <div style="padding: 15px; border-bottom: 1px solid #dbdbdb; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:10;">
+                        <span style="font-size:16px; font-weight:600;">Reel Comments</span>
+                        <i class="fas fa-times" style="cursor:pointer; color:#8e8e8e; font-size:18px;" onclick="document.getElementById('reel-comments-modal').classList.add('hidden')"></i>
+                    </div>
+                    <div id="reel-comments-list" style="flex:1; overflow-y:auto; padding:15px; text-align:left; font-size:13px; background:#fff;"></div>
+                    <div class="comment-input-area" style="display:flex; border-top:1px solid #efefef; padding:15px; background:#fff; align-items:center;">
+                        <input type="text" id="new-reel-comment-text" placeholder="Add a comment..." style="flex:1; border:none; outline:none; background:transparent;">
+                        <button onclick="window.postReelComment()" style="background:none; border:none; color:#0095f6; font-weight:600; cursor:pointer;">Post</button>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', reelModalHtml);
+        }
+    })();
+
+    const origViewProfile = window.viewProfile;
+    window.viewProfile = (uid) => {
+        const finalUid = uid || (auth.currentUser ? auth.currentUser.uid : null);
+        window.globalProfileUid = finalUid;
+        if(origViewProfile) origViewProfile(finalUid);
+    };
+
+    const origNav = window.navigateTo;
+    window.navigateTo = (page) => {
+        if(origNav) origNav(page);
+        if(page === 'reels') {
+            document.getElementById('bottom-nav-bar').style.display = 'flex';
+            window.loadReels();
+        } else {
+            document.querySelectorAll('.reel-video').forEach(v => v.pause());
+        }
+        if(page === 'profile') window.switchProfileTab('posts');
+    };
+
+    window.switchProfileTab = async (tab) => {
+        const tabPosts = document.getElementById('tab-posts');
+        const tabReels = document.getElementById('tab-reels');
+        const targetTab = document.getElementById(`tab-${tab}`);
+        const profilePosts = document.getElementById('profile-posts');
+        const profileReels = document.getElementById('profile-reels');
+        
+        if(tabPosts) tabPosts.classList.remove('active');
+        if(tabReels) tabReels.classList.remove('active');
+        if(targetTab) targetTab.classList.add('active');
+        
+        if (tab === 'posts') {
+            if(profilePosts) profilePosts.classList.remove('hidden');
+            if(profileReels) profileReels.classList.add('hidden');
+        } else {
+            if(profilePosts) profilePosts.classList.add('hidden');
+            if(profileReels) profileReels.classList.remove('hidden');
+            
+            const uid = window.globalProfileUid || (auth.currentUser ? auth.currentUser.uid : null);
+            if(!profileReels) return;
+            
+            profileReels.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
+            
+            const q = query(collection(db, "reels"), where("uid", "==", uid));
+            const snap = await getDocs(q);
+            profileReels.innerHTML = '';
+            
+            if(snap.empty) {
+                profileReels.innerHTML = '<p style="text-align:center; width:100%; padding:20px; color:#8e8e8e;">No reels yet.</p>';
+                return;
+            }
+            
+            snap.forEach(docSnap => {
+                const r = docSnap.data();
+                const div = document.createElement('div');
+                div.className = 'grid-item';
+                div.innerHTML = `<video src="${r.mediaUrl}" style="width:100%; height:100%; object-fit:cover;" muted></video><i class="fa-solid fa-play" style="position:absolute; top:5px; right:5px; color:white; font-size:12px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);"></i>`;
+                div.onclick = () => window.navigateTo('reels');
+                profileReels.appendChild(div);
+            });
+        }
+    };
+
+    const origPublish = window.publishMedia;
+    window.publishMedia = async () => {
+        if (window.upType === 'reel') {
+            const file = document.getElementById("mediaFile").files[0];
+            if(!file || !auth.currentUser) return;
+            const uSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+            const isMember = uSnap.data().membershipStatus === 'active';
+            
+            const today = new Date(); today.setHours(0,0,0,0);
+            const q = query(collection(db, "reels"), where("uid", "==", auth.currentUser.uid));
+            const snap = await getDocs(q);
+            let todayCount = 0;
+            snap.forEach(d => {
+                const rDate = d.data().timestamp ? d.data().timestamp.toMillis() : 0;
+                if(rDate > today.getTime()) todayCount++;
+            });
+
+            let limit = isMember ? 3 : 1;
+            if(todayCount >= limit) {
+                window.showToast(`⚠️ আপনি একদিনে সর্বোচ্চ ${limit} টি রিল আপলোড করতে পারবেন!`);
+                document.getElementById('preview-modal').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('preview-modal').classList.add('hidden');
+            const overlay = document.getElementById('upload-progress-overlay');
+            overlay.classList.remove('hidden');
+            document.getElementById('progress-status-text').innerText = "Uploading Reel...";
+
+            try {
+                const fd = new FormData(); fd.append("file", file); fd.append("upload_preset", "Instaastory");
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://api.cloudinary.com/v1_1/dzt2shn4m/auto/upload');
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        let pct = Math.round((e.loaded / e.total) * 100);
+                        document.getElementById('upload-progress-bar').style.width = pct + "%";
+                        document.getElementById('upload-progress-text').innerText = pct + "%";
+                    }
+                };
+                xhr.onload = async () => {
+                    if (xhr.status === 200) {
+                        const res = JSON.parse(xhr.responseText);
+                        await addDoc(collection(db, "reels"), {
+                            uid: auth.currentUser.uid, mediaUrl: res.secure_url, caption: document.getElementById('upload-caption').value,
+                            timestamp: serverTimestamp(), likes: [], comments: []
+                        });
+                        window.showToast("Reel Published Successfully!");
+                        overlay.classList.add('hidden');
+                        document.getElementById("mediaFile").value = "";
+                        document.getElementById('upload-caption').value = "";
+                        if(document.getElementById('reels-page').classList.contains('active')) window.loadReels();
+                    } else {
+                        window.showToast("Reel Upload failed"); overlay.classList.add('hidden');
+                    }
+                };
+                xhr.send(fd);
+            } catch (e) { window.showToast("Error uploading Reel"); overlay.classList.add('hidden'); }
+        } else { return origPublish(); }
+    };
+
+    // Load Reels (Double Tap & Instant Unmute Added)
+    window.loadReels = async () => {
+        const container = document.getElementById('reels-feed-container');
+        if(!container) return;
+        container.innerHTML = '<div class="spinner" style="margin: 50vh auto;"></div>';
+        
+        const q = query(collection(db, "reels"));
+        const snap = await getDocs(q);
+        container.innerHTML = '';
+        
+        if(snap.empty) {
+            container.innerHTML = '<p style="color:white; text-align:center; margin-top:50vh;">No reels yet.</p>';
+            return;
+        }
+        
+        let allReels = [];
+        snap.forEach(docSnap => allReels.push({ id: docSnap.id, ...docSnap.data() }));
+        allReels.sort((a, b) => {
+            let ta = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp || 0);
+            let tb = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp || 0);
+            return tb - ta;
+        });
+        
+        allReels.forEach(async (reel) => {
+            const reelId = reel.id;
+            const uSnap = await getDoc(doc(db, "users", reel.uid));
+            const u = uSnap.exists() ? uSnap.data() : {name:'User', avatar:'https://picsum.photos/100', followers:[]};
+            
+            const div = document.createElement('div');
+            div.className = 'reel-item';
+            
+            const isLiked = reel.likes && auth.currentUser && reel.likes.includes(auth.currentUser.uid);
+            const isFollowing = u.followers && auth.currentUser && u.followers.includes(auth.currentUser.uid);
+            const isMyReel = auth.currentUser && reel.uid === auth.currentUser.uid;
+            
+            div.innerHTML = `
+                <div class="reel-video-wrapper" style="position:relative; width:100%; height:100%;">
+                    <video class="reel-video" src="${reel.mediaUrl}" loop playsinline autoplay ${window.isReelsMuted ? 'muted' : ''}></video>
+                    <div class="reel-volume-indicator"><i class="fas fa-volume-mute"></i></div>
+                    <div class="reel-overlay">
+                        <div class="reel-info">
+                            <div class="reel-user" onclick="window.currentProfileViewUid = '${reel.uid}'; window.navigateTo('profile');">
+                                <img src="${u.avatar || 'https://picsum.photos/100'}">
+                                <span style="font-weight:600; font-size:14px; text-shadow:1px 1px 2px #000;">${u.name}</span>
+                                ${!isMyReel ? `<button class="reel-follow-btn" onclick="event.stopPropagation(); window.toggleReelFollow('${reel.uid}', this);">${isFollowing ? 'Following' : 'Follow'}</button>` : ''}
+                            </div>
+                            <div style="font-size:13px; text-shadow:1px 1px 2px #000;">${reel.caption || ''}</div>
+                        </div>
+                        <div class="reel-actions">
+                            <div class="reel-action-btn like-btn-wrap" onclick="window.toggleReelLike('${reelId}', this)">
+                                <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart" style="color: ${isLiked ? '#ed4956' : '#fff'};"></i>
+                                <span class="likes-count">${(reel.likes||[]).length}</span>
+                            </div>
+                            <div class="reel-action-btn" onclick="window.openReelComments('${reelId}')">
+                                <i class="fa-regular fa-comment"></i>
+                                <span class="comments-count">${(reel.comments||[]).length}</span>
+                            </div>
+                            <div class="reel-action-btn" onclick="window.shareReel('${reel.mediaUrl}')">
+                                <i class="fa-regular fa-paper-plane"></i>
+                                <span>Share</span>
+                            </div>
+                            ${isMyReel ? `
+                            <div class="reel-action-btn" onclick="window.askDeleteReel('${reelId}')" style="margin-top: 5px; color: #ff6b6b;">
+                                <i class="fa-solid fa-trash-can" style="font-size: 20px;"></i>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+
+            const vidWrap = div.querySelector('.reel-video-wrapper');
+            const vid = div.querySelector('.reel-video');
+            const volInd = div.querySelector('.reel-volume-indicator');
+            const likeBtn = div.querySelector('.like-btn-wrap');
+            
+            let lastTap = 0;
+            let tapTimeout;
+            
+            vidWrap.addEventListener('click', (e) => {
+                if(e.target.closest('.reel-actions') || e.target.closest('.reel-user') || e.target.closest('.reel-follow-btn')) return;
+                
+                const now = Date.now();
+                if(now - lastTap < 300) {
+                    clearTimeout(tapTimeout);
+                    const isCurrentlyLiked = likeBtn.querySelector('i').classList.contains('fa-solid');
+                    
+                    const r = vidWrap.getBoundingClientRect();
+                    const h = document.createElement('div');
+                    h.className = 'like-animation';
+                    h.innerHTML = `<svg viewBox="0 0 24 24" fill="#ed4956" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                    h.style.left = (e.clientX - r.left) + 'px';
+                    h.style.top = (e.clientY - r.top) + 'px';
+                    vidWrap.appendChild(h);
+                    setTimeout(() => h.remove(), 600);
+                    
+                    if(!isCurrentlyLiked) window.toggleReelLike(reelId, likeBtn);
+                } else {
+                    tapTimeout = setTimeout(() => {
+                        window.isReelsMuted = !window.isReelsMuted;
+                        vid.muted = window.isReelsMuted;
+                        volInd.innerHTML = window.isReelsMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+                        volInd.classList.add('show');
+                        setTimeout(() => volInd.classList.remove('show'), 1000);
+                    }, 300);
+                }
+                lastTap = now;
+            });
+        });
+
+        container.addEventListener('scroll', () => {
+            container.querySelectorAll('video').forEach(v => {
+                const rect = v.getBoundingClientRect();
+                if(rect.top >= -50 && rect.bottom <= window.innerHeight + 50) {
+                    if(v.paused) {
+                        v.muted = window.isReelsMuted;
+                        v.play().catch(e => { v.muted = true; window.isReelsMuted = true; v.play().catch(err=>{}); });
+                    }
+                } else {
+                    if(!v.paused) { v.pause(); v.currentTime = 0; }
+                }
+            });
+        });
+    };
+
+    // Delete Reel Logic
+    window.askDeleteReel = (reelId) => {
+        window.openProConfirm("এই রিলটি ডিলিট করতে চান?", async () => {
+            document.getElementById('global-loader').classList.remove('hidden');
+            try {
+                await deleteDoc(doc(db, "reels", reelId));
+                window.showToast("Reel Deleted!");
+                window.loadReels(); // Refresh feed after delete
+            } catch (e) {
+                window.showToast("Failed to delete Reel.");
+            }
+            document.getElementById('global-loader').classList.add('hidden');
+        });
+    };
+
+    // INSTANT (Optimistic) UI Updates for Like
+    window.toggleReelLike = (reelId, btnElement) => {
+        if(!auth.currentUser) return;
+        
+        const icon = btnElement.querySelector('i');
+        const countSpan = btnElement.querySelector('.likes-count');
+        
+        const isCurrentlyLiked = icon.classList.contains('fa-solid');
+        let currentCount = parseInt(countSpan.innerText) || 0;
+        
+        if (isCurrentlyLiked) {
+            icon.className = 'fa-regular fa-heart'; 
+            icon.style.color = '#fff';
+            countSpan.innerText = Math.max(0, currentCount - 1);
+        } else {
+            icon.className = 'fa-solid fa-heart'; 
+            icon.style.color = '#ed4956';
+            countSpan.innerText = currentCount + 1;
+            icon.style.transform = 'scale(1.3)';
+            setTimeout(() => icon.style.transform = 'scale(1)', 150);
+        }
+        
+        const reelRef = doc(db, "reels", reelId);
+        if (isCurrentlyLiked) {
+            updateDoc(reelRef, { likes: arrayRemove(auth.currentUser.uid) }).catch(e=>console.log(e));
+        } else {
+            updateDoc(reelRef, { likes: arrayUnion(auth.currentUser.uid) }).catch(e=>console.log(e));
+        }
+    };
+
+    // INSTANT (Optimistic) UI Updates for Follow
+    window.toggleReelFollow = (targetUid, btnElement) => {
+        if(!auth.currentUser) return;
+        
+        const isCurrentlyFollowing = btnElement.innerText === 'Following';
+        
+        if (isCurrentlyFollowing) {
+            btnElement.innerText = 'Follow';
+            btnElement.style.background = 'transparent';
+        } else {
+            btnElement.innerText = 'Following';
+            btnElement.style.background = 'rgba(255,255,255,0.2)';
+        }
+        
+        if(window.toggleFollow) {
+            window.toggleFollow(targetUid, isCurrentlyFollowing).catch(e=>console.log(e));
+        }
+    };
+
+    window.openReelComments = async (reelId) => {
+        window.currentReelId = reelId;
+        document.getElementById('reel-comments-modal').classList.remove('hidden');
+        const l = document.getElementById('reel-comments-list');
+        l.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
+        const rSnap = await getDoc(doc(db, "reels", reelId));
+        const rData = rSnap.data();
+        l.innerHTML = '';
+        if(rData.comments && rData.comments.length > 0) {
+            for(let c of rData.comments) {
+                const uSnap = await getDoc(doc(db, "users", c.uid));
+                const u = uSnap.exists() ? uSnap.data() : {name: 'User', avatar: 'https://picsum.photos/100'};
+                const d = document.createElement('div');
+                d.style.cssText = 'display:flex; gap:12px; margin-bottom:15px;';
+                d.innerHTML = `<img src="${u.avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">
+                               <div><div style="font-size:13px;"><strong>${u.name}</strong> <span>${c.text}</span></div></div>`;
+                l.appendChild(d);
+            }
+        } else { l.innerHTML = '<div style="text-align:center; padding:20px; color:#8e8e8e;">No comments yet.</div>'; }
+    };
+
+    window.postReelComment = async () => {
+        const t = document.getElementById('new-reel-comment-text').value.trim();
+        if(!t || !window.currentReelId || !auth.currentUser) return;
+        const newComment = { uid: auth.currentUser.uid, text: t, timestamp: Date.now() };
+        await updateDoc(doc(db, "reels", window.currentReelId), { comments: arrayUnion(newComment) });
+        document.getElementById('new-reel-comment-text').value = '';
+        window.openReelComments(window.currentReelId);
+    };
+
+    window.shareReel = (reelUrl) => {
+        if (navigator.share) { navigator.share({ title: 'Insta Story Reel', url: reelUrl }); } 
+        else { window.showToast("Reel Link Copied!"); }
+    };
+</script>
+<!-- ==========================================================
+     END REELS PATCH
+     ========================================================== -->
 
 </body>
 </html>
