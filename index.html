@@ -2767,8 +2767,8 @@ window.randomlyReplaceAllPostSongs = async () => {
     </script>
 </body>
 </html>
-<!-- ==========================================================
-     REELS AUDIO, DOUBLE-TAP, INSTANT LIKE & DELETE PATCH
+ <!-- ==========================================================
+     REELS ULTIMATE PATCH (DATE, THUMBNAILS, CAPTION, NO LAG)
      ========================================================== -->
 <style>
     /* Reels Feed CSS */
@@ -2820,6 +2820,14 @@ window.randomlyReplaceAllPostSongs = async () => {
     };
 
     window.isReelsMuted = true;
+
+    // Date Formatter for Reels
+    function getReelFormattedDate(timestamp) {
+        if(!timestamp) return '';
+        const d = timestamp.toMillis ? new Date(timestamp.toMillis()) : new Date(timestamp);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
 
     // Setup UI Components
     (function setupReelsUI() {
@@ -2890,6 +2898,22 @@ window.randomlyReplaceAllPostSongs = async () => {
         }
     })();
 
+    // Preview Modal Override to ensure Caption and Auto-caption works for Reels
+    const origPreviewModal = window.showPreviewModal;
+    window.showPreviewModal = () => {
+        if(origPreviewModal) origPreviewModal();
+        
+        if (window.upType === 'reel') {
+            const capBox = document.getElementById('upload-caption');
+            if (capBox) {
+                capBox.style.display = 'block';
+                if(!capBox.value || capBox.value === '') {
+                    capBox.value = '#reels #trending #foryou'; // Auto caption
+                }
+            }
+        }
+    };
+
     const origViewProfile = window.viewProfile;
     window.viewProfile = (uid) => {
         const finalUid = uid || (auth.currentUser ? auth.currentUser.uid : null);
@@ -2943,9 +2967,15 @@ window.randomlyReplaceAllPostSongs = async () => {
             
             snap.forEach(docSnap => {
                 const r = docSnap.data();
+                // Replace video extension with .jpg to get high quality image thumbnail from Cloudinary
+                let thumbUrl = r.mediaUrl.replace(/\.(mp4|webm|mov)$/i, '.jpg');
+                
                 const div = document.createElement('div');
                 div.className = 'grid-item';
-                div.innerHTML = `<video src="${r.mediaUrl}" style="width:100%; height:100%; object-fit:cover;" muted></video><i class="fa-solid fa-play" style="position:absolute; top:5px; right:5px; color:white; font-size:12px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);"></i>`;
+                div.innerHTML = `
+                    <img src="${thumbUrl}" style="width:100%; height:100%; object-fit:cover;">
+                    <i class="fa-solid fa-play" style="position:absolute; top:5px; right:5px; color:white; font-size:12px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);"></i>
+                `;
                 div.onclick = () => window.navigateTo('reels');
                 profileReels.appendChild(div);
             });
@@ -3013,7 +3043,7 @@ window.randomlyReplaceAllPostSongs = async () => {
         } else { return origPublish(); }
     };
 
-    // Load Reels (Double Tap & Instant Unmute Added)
+    // Load Reels (Double Tap, Unmute, Date, Follow added)
     window.loadReels = async () => {
         const container = document.getElementById('reels-feed-container');
         if(!container) return;
@@ -3047,6 +3077,7 @@ window.randomlyReplaceAllPostSongs = async () => {
             const isLiked = reel.likes && auth.currentUser && reel.likes.includes(auth.currentUser.uid);
             const isFollowing = u.followers && auth.currentUser && u.followers.includes(auth.currentUser.uid);
             const isMyReel = auth.currentUser && reel.uid === auth.currentUser.uid;
+            const uploadDateStr = getReelFormattedDate(reel.timestamp);
             
             div.innerHTML = `
                 <div class="reel-video-wrapper" style="position:relative; width:100%; height:100%;">
@@ -3056,10 +3087,15 @@ window.randomlyReplaceAllPostSongs = async () => {
                         <div class="reel-info">
                             <div class="reel-user" onclick="window.currentProfileViewUid = '${reel.uid}'; window.navigateTo('profile');">
                                 <img src="${u.avatar || 'https://picsum.photos/100'}">
-                                <span style="font-weight:600; font-size:14px; text-shadow:1px 1px 2px #000;">${u.name}</span>
-                                ${!isMyReel ? `<button class="reel-follow-btn" onclick="event.stopPropagation(); window.toggleReelFollow('${reel.uid}', this);">${isFollowing ? 'Following' : 'Follow'}</button>` : ''}
+                                <div style="display:flex; flex-direction:column; justify-content:center;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="font-weight:600; font-size:14px; text-shadow:1px 1px 2px #000;">${u.name}</span>
+                                        ${!isMyReel ? `<button class="reel-follow-btn" onclick="event.stopPropagation(); window.toggleReelFollow('${reel.uid}', this);">${isFollowing ? 'Following' : 'Follow'}</button>` : ''}
+                                    </div>
+                                    <span style="font-size:10px; color:#ddd; text-shadow:1px 1px 2px #000; margin-top:2px;">${uploadDateStr}</span>
+                                </div>
                             </div>
-                            <div style="font-size:13px; text-shadow:1px 1px 2px #000;">${reel.caption || ''}</div>
+                            <div style="font-size:13px; text-shadow:1px 1px 2px #000; margin-top:5px;">${reel.caption || ''}</div>
                         </div>
                         <div class="reel-actions">
                             <div class="reel-action-btn like-btn-wrap" onclick="window.toggleReelLike('${reelId}', this)">
@@ -3146,7 +3182,7 @@ window.randomlyReplaceAllPostSongs = async () => {
             try {
                 await deleteDoc(doc(db, "reels", reelId));
                 window.showToast("Reel Deleted!");
-                window.loadReels(); // Refresh feed after delete
+                window.loadReels(); 
             } catch (e) {
                 window.showToast("Failed to delete Reel.");
             }
