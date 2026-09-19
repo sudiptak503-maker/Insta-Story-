@@ -701,7 +701,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, limit, startAfter, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, enableIndexedDbPersistence, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDoc, where, getDocs, limit, startAfter, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD5ZsNOaprK3pJafOmRZYbC-s-HLAK-Msg",
@@ -714,6 +714,16 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+// আল্ট্রা ডেটা ক্যাশিং (Offline Persistence) চালু করার কোড
+enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code == 'failed-precondition') {
+        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a a time.');
+    } else if (err.code == 'unimplemented') {
+        console.warn('The current browser does not support all of the features required to enable persistence');
+    }
+});
+
 
         const zuuPayConfig = {
             apiKey: "AIzaSyBbBKnhSe4Oy43DSQAYJa5wiuR-rktw3Cc",
@@ -2090,24 +2100,60 @@
             overlay.classList.add('hidden'); document.getElementById("avatarUpload").value = "";
         };
 
-        window.openShareModal = (postId) => { postToShare = postId; document.getElementById('shareSearchInput').value = ''; renderShareList(); document.getElementById('share-modal').classList.remove('hidden'); };
-        window.renderShareList = () => {
-            const q = document.getElementById("shareSearchInput").value.toLowerCase(); const l = document.getElementById("share-users-list"); l.innerHTML = '';
-            let f = allUsers.filter(u => u.uid !== currentUser.uid); if(q) f = f.filter(u => (u.name || '').toLowerCase().includes(q));
-            f.forEach(u => {
-                const d = document.createElement('div'); d.className = 'share-user-item';
-                d.innerHTML = `<div class="share-user-info"><img src="${u.avatar}"> <span>${u.name}</span></div><button class="send-btn" id="send-btn-${u.uid}" onclick="sendSharedPost('${u.uid}')">Send</button>`;
-                l.appendChild(d);
-            });
-        };
-        
-        let postToShare = null;
-        window.sendSharedPost = async (tUid) => {
-            if(!postToShare) return;
-            const b = document.getElementById(`send-btn-${tUid}`); if(b) { b.innerText = "Sent"; b.classList.add("sent"); b.disabled = true; }
-            const cId = currentUser.uid < tUid ? currentUser.uid + '_' + tUid : tUid + '_' + currentUser.uid;
-            await addDoc(collection(db, `chats/${cId}/messages`), { sender: currentUser.uid, postId: postToShare, timestamp: Date.now() });
-        };
+   let postToShare = null;
+let shareMediaType = 'post'; 
+
+window.openShareModal = (mediaId, type = 'post') => { 
+    postToShare = mediaId; 
+    shareMediaType = type; 
+    document.getElementById('shareSearchInput').value = ''; 
+    renderShareList(); 
+    document.getElementById('share-modal').classList.remove('hidden'); 
+};
+
+window.renderShareList = () => {
+    const q = document.getElementById("shareSearchInput").value.toLowerCase(); 
+    const l = document.getElementById("share-users-list"); 
+    l.innerHTML = '';
+    let f = allUsers.filter(u => u.uid !== currentUser.uid); 
+    if(q) f = f.filter(u => (u.name || '').toLowerCase().includes(q));
+    f.forEach(u => {
+        const d = document.createElement('div'); d.className = 'share-user-item';
+        d.innerHTML = `<div class="share-user-info"><img src="${u.avatar}"> <span>${u.name}</span></div><button class="send-btn" id="send-btn-${u.uid}" onclick="sendSharedPost('${u.uid}')">Send</button>`;
+        l.appendChild(d);
+    });
+};
+
+window.sendSharedPost = async (tUid) => {
+    if(!postToShare) return;
+    const b = document.getElementById(`send-btn-${tUid}`); 
+    if(b) { b.innerText = "Sent"; b.classList.add("sent"); b.disabled = true; }
+    const cId = currentUser.uid < tUid ? currentUser.uid + '_' + tUid : tUid + '_' + currentUser.uid;
+    await addDoc(collection(db, `chats/${cId}/messages`), { 
+        sender: currentUser.uid, 
+        postId: postToShare, 
+        mediaType: shareMediaType, 
+        timestamp: Date.now() 
+    });
+};
+     
+
+window.renderShareList = () => {
+    const q = document.getElementById("shareSearchInput").value.toLowerCase(); const l = document.getElementById("share-users-list"); l.innerHTML = '';
+    let f = allUsers.filter(u => u.uid !== currentUser.uid); if(q) f = f.filter(u => (u.name || '').toLowerCase().includes(q));
+    f.forEach(u => {
+        const d = document.createElement('div'); d.className = 'share-user-item';
+        d.innerHTML = `<div class="share-user-info"><img src="${u.avatar}"> <span>${u.name}</span></div><button class="send-btn" id="send-btn-${u.uid}" onclick="sendSharedPost('${u.uid}')">Send</button>`;
+        l.appendChild(d);
+    });
+};
+
+window.sendSharedPost = async (tUid) => {
+    if(!postToShare) return;
+    const b = document.getElementById(`send-btn-${tUid}`); if(b) { b.innerText = "Sent"; b.classList.add("sent"); b.disabled = true; }
+    const cId = currentUser.uid < tUid ? currentUser.uid + '_' + tUid : tUid + '_' + currentUser.uid;
+    await addDoc(collection(db, `chats/${cId}/messages`), { sender: currentUser.uid, postId: postToShare, mediaType: shareMediaType, timestamp: Date.now() });
+};
 
         const getChatId = (u1, u2) => u1 < u2 ? u1 + '_' + u2 : u2 + '_' + u1;
         let actChatU = null, chatUnsub = null;
@@ -2132,10 +2178,19 @@
                     const m = doc.data(); const isMe = m.sender === currentUser.uid;
                     const d = document.createElement('div'); d.className = `chat-bubble ${isMe ? 'sent' : 'received'}`;
                     if(m.postId) {
-                        const p = allPosts.find(pt => pt.id === m.postId);
-                        if(p) { d.innerHTML = `<div style="font-size:12px; margin-bottom:5px;">Shared a post</div><div class="chat-shared-post" onclick="closeModals(null); openPostViewer('${p.id}')">${p.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? `<video src="${p.mediaUrl}"></video>` : `<img src="${p.mediaUrl}">`}</div>`; } 
-                        else { d.innerHTML = '<i>Post unavailable</i>'; }
-                    } else { d.innerText = m.text; }
+    let p = allPosts.find(pt => pt.id === m.postId);
+    if (!p && window.allReelsGlobal) p = window.allReelsGlobal.find(pt => pt.id === m.postId); // রিলস খোঁজার লজিক
+    
+    if(p) { 
+        let isVideo = p.mediaUrl.match(/\.(mp4|webm|mov)$/i);
+        d.innerHTML = `<div style="font-size:12px; margin-bottom:5px;">Shared a ${m.mediaType || 'post'}</div>
+                       <div class="chat-shared-post" onclick="closeModals(null); ${m.mediaType === 'reel' ? `window.navigateTo('reels')` : `openPostViewer('${p.id}')`} ">
+                           ${isVideo ? `<video src="${p.mediaUrl}" muted style="width:100%; border-radius:10px;"></video>` : `<img src="${p.mediaUrl}" style="width:100%; border-radius:10px;">`}
+                       </div>`; 
+    } 
+    else { d.innerHTML = '<i>Media unavailable</i>'; }
+} else { d.innerText = m.text; }
+
                     a.appendChild(d);
                 });
                 a.scrollTop = a.scrollHeight;
@@ -2808,16 +2863,7 @@ window.randomlyReplaceAllPostSongs = async () => {
     const db = getFirestore();
 
     // Cloudinary Setup
-    const originalOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url) {
-        if (url && url.includes('api.cloudinary.com')) { url = 'https://api.cloudinary.com/v1_1/dzt2shn4m/auto/upload'; }
-        return originalOpen.apply(this, arguments);
-    };
-    const originalSend = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.send = function(body) {
-        if (body instanceof FormData && body.has('upload_preset')) { body.set('upload_preset', 'Instaastory'); }
-        return originalSend.apply(this, arguments);
-    };
+    
 
     window.isReelsMuted = true;
 
@@ -3044,136 +3090,154 @@ window.randomlyReplaceAllPostSongs = async () => {
     };
 
     // Load Reels (Double Tap, Unmute, Date, Follow added)
-    window.loadReels = async () => {
-        const container = document.getElementById('reels-feed-container');
-        if(!container) return;
+    window.allReelsGlobal = []; // চ্যাটে দেখানোর জন্য গ্লোবাল ভ্যারিয়েবল
+
+window.loadReels = async () => {
+    const container = document.getElementById('reels-feed-container');
+    if(!container) return;
+    
+    // শুধু প্রথমবার ফায়ারবেস থেকে ডেটা টানবে, এরপর ক্যাশ থেকে র‍্যান্ডম করে দেখাবে
+    if (window.allReelsGlobal.length === 0) {
         container.innerHTML = '<div class="spinner" style="margin: 50vh auto;"></div>';
-        
         const q = query(collection(db, "reels"));
         const snap = await getDocs(q);
-        container.innerHTML = '';
         
         if(snap.empty) {
             container.innerHTML = '<p style="color:white; text-align:center; margin-top:50vh;">No reels yet.</p>';
             return;
         }
         
-        let allReels = [];
-        snap.forEach(docSnap => allReels.push({ id: docSnap.id, ...docSnap.data() }));
-        allReels.sort((a, b) => {
-            let ta = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp || 0);
-            let tb = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp || 0);
-            return tb - ta;
-        });
+        snap.forEach(docSnap => window.allReelsGlobal.push({ id: docSnap.id, ...docSnap.data() }));
+    }
+
+    container.innerHTML = '';
+    
+    // রিলসগুলো এলোমেলো (Shuffle/Random) করার লজিক
+    let shuffledReels = [...window.allReelsGlobal].sort(() => Math.random() - 0.5);
+    let currentlyRendered = 0;
+
+    // ১টি করে রিল রেন্ডার করার ফাংশন
+    const renderNextReel = async () => {
+        if (currentlyRendered >= shuffledReels.length) return; // সব রিলস শেষ
         
-        allReels.forEach(async (reel) => {
-            const reelId = reel.id;
-            const uSnap = await getDoc(doc(db, "users", reel.uid));
-            const u = uSnap.exists() ? uSnap.data() : {name:'User', avatar:'https://picsum.photos/100', followers:[]};
-            
-            const div = document.createElement('div');
-            div.className = 'reel-item';
-            
-            const isLiked = reel.likes && auth.currentUser && reel.likes.includes(auth.currentUser.uid);
-            const isFollowing = u.followers && auth.currentUser && u.followers.includes(auth.currentUser.uid);
-            const isMyReel = auth.currentUser && reel.uid === auth.currentUser.uid;
-            const uploadDateStr = getReelFormattedDate(reel.timestamp);
-            
-            div.innerHTML = `
-                <div class="reel-video-wrapper" style="position:relative; width:100%; height:100%;">
-                    <video class="reel-video" src="${reel.mediaUrl}" loop playsinline autoplay ${window.isReelsMuted ? 'muted' : ''}></video>
-                    <div class="reel-volume-indicator"><i class="fas fa-volume-mute"></i></div>
-                    <div class="reel-overlay">
-                        <div class="reel-info">
-                            <div class="reel-user" onclick="window.currentProfileViewUid = '${reel.uid}'; window.navigateTo('profile');">
-                                <img src="${u.avatar || 'https://picsum.photos/100'}">
-                                <div style="display:flex; flex-direction:column; justify-content:center;">
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <span style="font-weight:600; font-size:14px; text-shadow:1px 1px 2px #000;">${u.name}</span>
-                                        ${!isMyReel ? `<button class="reel-follow-btn" onclick="event.stopPropagation(); window.toggleReelFollow('${reel.uid}', this);">${isFollowing ? 'Following' : 'Follow'}</button>` : ''}
-                                    </div>
-                                    <span style="font-size:10px; color:#ddd; text-shadow:1px 1px 2px #000; margin-top:2px;">${uploadDateStr}</span>
+        const reel = shuffledReels[currentlyRendered];
+        currentlyRendered++;
+        const reelId = reel.id;
+        
+        const uSnap = await getDoc(doc(db, "users", reel.uid));
+        const u = uSnap.exists() ? uSnap.data() : {name:'User', avatar:'https://picsum.photos/100', followers:[]};
+        
+        const div = document.createElement('div');
+        div.className = 'reel-item';
+        
+        const isLiked = reel.likes && auth.currentUser && reel.likes.includes(auth.currentUser.uid);
+        const isFollowing = u.followers && auth.currentUser && u.followers.includes(auth.currentUser.uid);
+        const isMyReel = auth.currentUser && reel.uid === auth.currentUser.uid;
+        
+        div.innerHTML = `
+            <div class="reel-video-wrapper" style="position:relative; width:100%; height:100%;">
+                <!-- Lazy Load Video -->
+                <video class="reel-video" src="${reel.mediaUrl}" loop playsinline preload="metadata" ${window.isReelsMuted ? 'muted' : ''}></video>
+                <div class="reel-volume-indicator"><i class="fas fa-volume-mute"></i></div>
+                <div class="reel-overlay">
+                    <div class="reel-info">
+                        <!-- প্রোফাইল লিঙ্ক ফিক্স করা হয়েছে: window.viewProfile(reel.uid) -->
+                        <div class="reel-user" onclick="event.stopPropagation(); window.viewProfile('${reel.uid}');">
+                            <img src="${u.avatar || 'https://picsum.photos/100'}">
+                            <div style="display:flex; flex-direction:column; justify-content:center;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-weight:600; font-size:14px; text-shadow:1px 1px 2px #000;">${u.name}</span>
+                                    ${!isMyReel ? `<button class="reel-follow-btn" onclick="event.stopPropagation(); window.toggleReelFollow('${reel.uid}', this);">${isFollowing ? 'Following' : 'Follow'}</button>` : ''}
                                 </div>
                             </div>
-                            <div style="font-size:13px; text-shadow:1px 1px 2px #000; margin-top:5px;">${reel.caption || ''}</div>
                         </div>
-                        <div class="reel-actions">
-                            <div class="reel-action-btn like-btn-wrap" onclick="window.toggleReelLike('${reelId}', this)">
-                                <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart" style="color: ${isLiked ? '#ed4956' : '#fff'};"></i>
-                                <span class="likes-count">${(reel.likes||[]).length}</span>
-                            </div>
-                            <div class="reel-action-btn" onclick="window.openReelComments('${reelId}')">
-                                <i class="fa-regular fa-comment"></i>
-                                <span class="comments-count">${(reel.comments||[]).length}</span>
-                            </div>
-                            <div class="reel-action-btn" onclick="window.shareReel('${reel.mediaUrl}')">
-                                <i class="fa-regular fa-paper-plane"></i>
-                                <span>Share</span>
-                            </div>
-                            ${isMyReel ? `
-                            <div class="reel-action-btn" onclick="window.askDeleteReel('${reelId}')" style="margin-top: 5px; color: #ff6b6b;">
-                                <i class="fa-solid fa-trash-can" style="font-size: 20px;"></i>
-                            </div>
-                            ` : ''}
+                        <div style="font-size:13px; text-shadow:1px 1px 2px #000; margin-top:5px;">${reel.caption || ''}</div>
+                    </div>
+                    <div class="reel-actions">
+                        <div class="reel-action-btn like-btn-wrap" onclick="event.stopPropagation(); window.toggleReelLike('${reelId}', this)">
+                            <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart" style="color: ${isLiked ? '#ed4956' : '#fff'};"></i>
+                            <span class="likes-count">${(reel.likes||[]).length}</span>
                         </div>
+                        <div class="reel-action-btn" onclick="event.stopPropagation(); window.openReelComments('${reelId}')">
+                            <i class="fa-regular fa-comment"></i>
+                            <span class="comments-count">${(reel.comments||[]).length}</span>
+                        </div>
+                        <!-- ইন-অ্যাপ শেয়ারিং ফিক্স করা হয়েছে -->
+                        <div class="reel-action-btn" onclick="event.stopPropagation(); window.openShareModal('${reelId}', 'reel')">
+                            <i class="fa-regular fa-paper-plane"></i>
+                            <span>Share</span>
+                        </div>
+                        ${isMyReel ? `
+                        <div class="reel-action-btn" onclick="event.stopPropagation(); window.askDeleteReel('${reelId}')" style="margin-top: 5px; color: #ff6b6b;">
+                            <i class="fa-solid fa-trash-can" style="font-size: 20px;"></i>
+                        </div>` : ''}
                     </div>
                 </div>
-            `;
-            container.appendChild(div);
+            </div>
+        `;
+        container.appendChild(div);
 
-            const vidWrap = div.querySelector('.reel-video-wrapper');
-            const vid = div.querySelector('.reel-video');
-            const volInd = div.querySelector('.reel-volume-indicator');
-            const likeBtn = div.querySelector('.like-btn-wrap');
-            
-            let lastTap = 0;
-            let tapTimeout;
-            
-            vidWrap.addEventListener('click', (e) => {
-                if(e.target.closest('.reel-actions') || e.target.closest('.reel-user') || e.target.closest('.reel-follow-btn')) return;
-                
-                const now = Date.now();
-                if(now - lastTap < 300) {
-                    clearTimeout(tapTimeout);
-                    const isCurrentlyLiked = likeBtn.querySelector('i').classList.contains('fa-solid');
-                    
-                    const r = vidWrap.getBoundingClientRect();
-                    const h = document.createElement('div');
-                    h.className = 'like-animation';
-                    h.innerHTML = `<svg viewBox="0 0 24 24" fill="#ed4956" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
-                    h.style.left = (e.clientX - r.left) + 'px';
-                    h.style.top = (e.clientY - r.top) + 'px';
-                    vidWrap.appendChild(h);
-                    setTimeout(() => h.remove(), 600);
-                    
-                    if(!isCurrentlyLiked) window.toggleReelLike(reelId, likeBtn);
-                } else {
-                    tapTimeout = setTimeout(() => {
-                        window.isReelsMuted = !window.isReelsMuted;
-                        vid.muted = window.isReelsMuted;
-                        volInd.innerHTML = window.isReelsMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
-                        volInd.classList.add('show');
-                        setTimeout(() => volInd.classList.remove('show'), 1000);
-                    }, 300);
-                }
-                lastTap = now;
-            });
+        // Double Tap To Like & Mute Logic
+        const vidWrap = div.querySelector('.reel-video-wrapper');
+        const vid = div.querySelector('.reel-video');
+        const volInd = div.querySelector('.reel-volume-indicator');
+        const likeBtn = div.querySelector('.like-btn-wrap');
+        
+        let lastTap = 0; let tapTimeout;
+        vidWrap.addEventListener('click', (e) => {
+            if(e.target.closest('.reel-actions') || e.target.closest('.reel-user') || e.target.closest('.reel-follow-btn')) return;
+            const now = Date.now();
+            if(now - lastTap < 300) {
+                clearTimeout(tapTimeout);
+                const isCurrentlyLiked = likeBtn.querySelector('i').classList.contains('fa-solid');
+                const r = vidWrap.getBoundingClientRect();
+                const h = document.createElement('div'); h.className = 'like-animation';
+                h.innerHTML = `<svg viewBox="0 0 24 24" fill="#ed4956" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                h.style.left = (e.clientX - r.left) + 'px'; h.style.top = (e.clientY - r.top) + 'px';
+                vidWrap.appendChild(h); setTimeout(() => h.remove(), 600);
+                if(!isCurrentlyLiked) window.toggleReelLike(reelId, likeBtn);
+            } else {
+                tapTimeout = setTimeout(() => {
+                    window.isReelsMuted = !window.isReelsMuted;
+                    vid.muted = window.isReelsMuted;
+                    volInd.innerHTML = window.isReelsMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+                    volInd.classList.add('show'); setTimeout(() => volInd.classList.remove('show'), 1000);
+                }, 300);
+            }
+            lastTap = now;
         });
 
-        container.addEventListener('scroll', () => {
-            container.querySelectorAll('video').forEach(v => {
-                const rect = v.getBoundingClientRect();
-                if(rect.top >= -50 && rect.bottom <= window.innerHeight + 50) {
-                    if(v.paused) {
-                        v.muted = window.isReelsMuted;
-                        v.play().catch(e => { v.muted = true; window.isReelsMuted = true; v.play().catch(err=>{}); });
-                    }
-                } else {
-                    if(!v.paused) { v.pause(); v.currentTime = 0; }
-                }
-            });
-        });
+        // Intersection Observer (অটো-প্লে এবং সুইপ করলে নতুন রিল লোড হওয়া)
+        if(window.reelObserver) window.reelObserver.observe(div);
     };
+
+    // রিলস স্ক্রল মনিটরিং এবং ১টি করে লোড (Lazy Load)
+    if(window.reelObserver) window.reelObserver.disconnect();
+    window.reelObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const v = entry.target.querySelector('video');
+            if(entry.isIntersecting) {
+                // ভিডিও স্ক্রিনে আসলে প্লে হবে
+                if(v.paused) {
+                    v.muted = window.isReelsMuted;
+                    v.play().catch(e => { v.muted = true; window.isReelsMuted = true; v.play().catch(err=>{}); });
+                }
+                
+                // যদি ইউজার স্ক্রল করে একদম শেষের রিলে চলে আসে, তবে আরেকটি নতুন রিল লোড হবে
+                if (entry.target === container.lastElementChild) {
+                    renderNextReel();
+                }
+            } else {
+                // ভিডিও স্ক্রিন থেকে চলে গেলে পজ হয়ে যাবে
+                if(!v.paused) { v.pause(); v.currentTime = 0; }
+            }
+        });
+    }, { threshold: 0.6 }); // 60% স্ক্রিনে আসলেই প্লে হবে
+
+    // প্রথমবার ২-৩টি রিল লোড করে রাখা যাতে স্ক্রল স্মুথ হয়
+    await renderNextReel();
+    await renderNextReel();
+};
 
     // Delete Reel Logic
     window.askDeleteReel = (reelId) => {
