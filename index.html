@@ -45,6 +45,16 @@
             <div class="toggle-auth" id="toggle-auth">Don't have an account? <span>Sign Up</span></div>
         </div>
     </div>
+<!-- Maintenance Screen (সার্ভার আপডেটের জন্য) -->
+<div id="maintenance-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; z-index: 999999999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px;">
+    <i class="fa-solid fa-tools" style="font-size: 50px; color: #0095f6; margin-bottom: 20px;"></i>
+    <h2 style="font-family: 'Poppins', sans-serif;">সার্ভার আপডেট চলছে</h2>
+    <p style="color: #8e8e8e; margin-top: 10px; font-size: 14px;">
+        উন্নত সেবার লক্ষ্যে আমাদের সার্ভার আপডেটের কাজ চলছে। <br>
+        আগামী ২-৩ দিনের মধ্যে অ্যাপটি পুনরায় চালু হবে। <br>
+        সাময়িক অসুবিধার জন্য আমরা আন্তরিকভাবে দুঃখিত!
+    </p>
+</div>
 
     <div id="main-app" class="hidden">
         <div id="home-page" class="page active">
@@ -73,12 +83,13 @@
                 <input type="text" id="exploreSearch" placeholder="Search users..." oninput="searchUsers()">
             </div>
             <div id="explore-leaderboard" style="padding: 15px;">
-                <div style="display:flex; gap:10px; margin-bottom: 10px;">
-                    <button class="action-btn primary" id="btn-lb-normal" onclick="switchLeaderboard('normal')">Leaderboard</button>
+                <div style="display:flex; gap:10px; margin-bottom: 10px; flex-wrap:wrap;">
+                    <button class="action-btn primary" id="btn-lb-membership" onclick="switchLeaderboard('membership')">Membership LB</button>
+                    <button class="action-btn" id="btn-lb-white" onclick="switchLeaderboard('white')">White Tick LB</button>
                     <button class="action-btn" id="btn-lb-blue" onclick="switchLeaderboard('blue')">Blue Tick LB</button>
                 </div>
                 <div style="font-size:12px; color:#8e8e8e; margin-bottom:15px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #efefef;" id="lb-rules-text">
-                    Rules: মেম্বারশিপ নেওয়া ইউজারদের র‍্যাংকিং। ৩ মাস বা মোট ৩ বার ১ম হলে ব্লু টিক!
+                    Rules: মেম্বারশিপ নেওয়া ইউজারদের র‍্যাংকিং। মাসে ১ম হলে হোয়াইট টিক!
                 </div>
                 <div id="my-rank-banner" style="display:none; margin-bottom:15px;"></div>
                 <div class="list-container" id="leaderboard-list"></div>
@@ -144,7 +155,12 @@
                     <i class="fa-solid fa-shield-halved"></i> Admin Panel
                 </button>
             </div>
+            <div class="profile-tabs" id="custom-profile-tabs">
+                <div class="profile-tab active" id="tab-posts" onclick="window.switchProfileTab('posts')"><i class="fa-solid fa-table-cells"></i></div>
+                <div class="profile-tab" id="tab-reels" onclick="window.switchProfileTab('reels')"><i class="fa-solid fa-film"></i></div>
+            </div>
             <div class="profile-grid" id="profile-posts"></div>
+            <div class="profile-grid hidden" id="profile-reels"></div>
         </div>
         
         <div id="profile-menu-modal" class="modal-overlay hidden" onclick="closeModals(event)">
@@ -153,6 +169,7 @@
                 <button class="modal-option-btn" onclick="openAboutApp()"><i class="fa-solid fa-circle-info" style="width:20px;"></i> About App</button>
                 <button class="modal-option-btn" onclick="openPrivacyPolicy()"><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Privacy Policy</button>
                 <button class="modal-option-btn" onclick="openVerificationMenu()"><i class="fa-solid fa-certificate" style="width:20px;"></i> Verification</button>
+                <button class="modal-option-btn" onclick="window.openAdsPage()"><i class="fa-solid fa-bullhorn" style="width:20px; color:#f09433;"></i> Promote / Ads</button>
                 <button class="modal-option-btn" onclick="window.askLogout()" style="color:#ed4956; border-top: 1px solid #efefef; margin-top: 5px;">
                     <i class="fa-solid fa-right-from-bracket" style="width:20px;"></i> Log Out
                 </button>
@@ -189,6 +206,42 @@
             </div>
         </div>
 
+        <div id="ads-page" class="page" style="background: #fafafa;">
+            <div class="top-bar">
+                <i class="fa-solid fa-arrow-left header-icon" onclick="navigateTo('profile')"></i>
+                <h2 style="font-size: 1.2rem; flex:1; margin-left:15px; color:#f09433;"><i class="fa-solid fa-bullhorn"></i> Promote Posts</h2>
+            </div>
+            <div style="padding: 15px;">
+                <div style="background: linear-gradient(45deg, #f09433, #dc2743); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                    <h3 style="font-size: 18px; margin-bottom: 8px;"><i class="fa-solid fa-bullhorn"></i> Boost Your Posts</h3>
+                    <p style="font-size: 13px; opacity: 0.95; line-height: 1.5;">আপনার পোস্ট সিলেক্ট করুন এবং এনগেজমেন্ট কিনুন। প্রতি ১০০ এনগেজমেন্টের জন্য মাত্র ১০ টাকা। আপনার পোস্ট বারবার হোম ফিডের উপরের দিকে দেখানো হবে।</p>
+                </div>
+                <div style="background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                    <h4 style="font-size: 14px; margin-bottom: 12px; color: #262626;">Select a Post to Promote</h4>
+                    <div id="ads-post-selector" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;"></div>
+                </div>
+                <div id="ads-selected-info" style="display: none; background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                    <h4 style="font-size: 14px; margin-bottom: 10px; color: #262626;">Promotion Package</h4>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <button class="ad-pkg-btn" data-eng="100" data-price="10" onclick="selectAdPackage(this)">100 Eng - ₹10</button>
+                        <button class="ad-pkg-btn" data-eng="200" data-price="20" onclick="selectAdPackage(this)">200 Eng - ₹20</button>
+                        <button class="ad-pkg-btn" data-eng="500" data-price="50" onclick="selectAdPackage(this)">500 Eng - ₹50</button>
+                    </div>
+                    <div style="background: #fafafa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                        <div style="font-size: 12px; color: #8e8e8e;">Selected Package:</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0095f6;" id="ads-pkg-display">None</div>
+                    </div>
+                    <button id="ads-submit-btn" class="publish-btn" style="background: linear-gradient(45deg, #f09433, #dc2743);" onclick="submitAdPayment()" disabled>Select a Package</button>
+                </div>
+                <div style="background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 15px;">
+                    <h4 style="font-size: 14px; margin-bottom: 12px; color: #262626;">My Active Promotions</h4>
+                    <div id="my-promotions-list">
+                        <p style="font-size: 12px; color: #8e8e8e; text-align: center;">No active promotions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="about-app-modal" class="modal-overlay center hidden" onclick="closeModals(event)">
             <div class="modal-content" onclick="event.stopPropagation()" style="text-align: left;">
                 <div class="modal-title">About App</div>
@@ -214,6 +267,7 @@
                 <button class="action-btn primary" id="btn-admin-users" onclick="showAdminSection('users')">Users</button>
                 <button class="action-btn" id="btn-admin-verification" onclick="showAdminSection('verification')">Verifications</button>
                 <button class="action-btn" id="btn-admin-membership" onclick="showAdminSection('membership')">Memberships</button>
+                <button class="action-btn" id="btn-admin-ads" onclick="showAdminSection('ads')">Ads</button>
                 <button class="action-btn" id="btn-admin-audio" onclick="showAdminSection('audio')">Audio</button>
             </div>
             <div id="admin-sec-users" class="admin-sec" style="padding: 15px;">
@@ -224,6 +278,9 @@
             </div>
             <div id="admin-sec-membership" class="admin-sec" style="padding: 15px; display: none;">
                 <div id="admin-membership-list"></div>
+            </div>
+            <div id="admin-sec-ads" class="admin-sec" style="padding: 15px; display: none;">
+                <div id="admin-ads-list"></div>
             </div>
             <div id="admin-sec-audio" class="admin-sec" style="padding: 15px; display: none;">
                 <div style="background: #fff; border: 1px solid #dbdbdb; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
