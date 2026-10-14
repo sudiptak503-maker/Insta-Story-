@@ -250,13 +250,21 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 /* Reels */
 .header-reel-btn{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:7px 16px;border-radius:20px;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(102,126,234,.4);transition:.2s;}
 .header-reel-btn:active{transform:scale(.95);}
-#reels-feed-container{height:calc(100vh - 58px);overflow-y:scroll;scroll-snap-type:y mandatory;background:#0a0a15;scrollbar-width:none;}
+#reels-feed-container{position:absolute;inset:0;height:100dvh;padding-top:0;box-sizing:border-box;overflow-y:auto;overscroll-behavior-y:contain;scroll-snap-type:y mandatory;scroll-snap-stop:always;background:#0a0a15;scrollbar-width:none;}
 #reels-feed-container::-webkit-scrollbar{display:none;}
-.reel-item{height:100%;width:100%;scroll-snap-align:start;position:relative;}
-.reel-video{width:100%;height:100%;object-fit:cover;background:#0a0a15;}
+.reel-item{height:100dvh;width:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;overflow:hidden;}
+.reel-video{display:block;width:100%;height:100%;object-fit:cover;object-position:center;background:#000;}
 .reel-overlay{position:absolute;bottom:0;left:0;width:100%;padding:20px 12px 80px 12px;background:linear-gradient(transparent,rgba(0,0,0,.85));display:flex;justify-content:space-between;align-items:flex-end;z-index:10;color:#fff;pointer-events:none;}
 .reel-overlay *{pointer-events:auto;}
-.reel-info{flex:1;padding-right:20px;}
+.reel-info{flex:1;min-width:0;padding-right:12px;max-width:calc(100vw - 94px);overflow-wrap:anywhere;word-break:break-word;}
+.reel-info .reel-caption,.reel-info div[style*="font-size:13px"]{white-space:normal!important;overflow-wrap:anywhere;word-break:break-word;line-height:1.45;max-height:22vh;overflow-y:auto;text-shadow:0 1px 3px #000;}
+.reel-video-wrapper{touch-action:pan-y;overflow:hidden;}.reel-sound-toggle{top:16px!important;right:14px!important;}.like-animation{width:100px;height:100px;display:flex;align-items:center;justify-content:center;animation:heartPop .75s cubic-bezier(.175,.885,.32,1.275) forwards;}.like-animation svg{width:100%;height:100%;filter:drop-shadow(0 3px 12px rgba(239,68,68,.65));}@keyframes heartPop{0%{transform:translate(-50%,-50%) scale(.1);opacity:0}25%{transform:translate(-50%,-50%) scale(1.25);opacity:1}55%{transform:translate(-50%,-50%) scale(.95);opacity:1}100%{transform:translate(-50%,-50%) scale(1.45);opacity:0}}
+.reel-item{height:100dvh;min-height:0;}
+#reels-page.page.active{display:block!important;position:fixed!important;inset:0!important;width:100vw;height:100dvh!important;min-height:0!important;padding:0!important;margin:0!important;overflow:hidden!important;z-index:500;}
+#reels-page .reels-topbar{position:absolute!important;top:env(safe-area-inset-top,0px)!important;left:0;right:0;width:100%;background:linear-gradient(180deg,rgba(5,5,12,.88),rgba(5,5,12,.35))!important;box-shadow:none!important;pointer-events:none;}
+#reels-page .reels-topbar button,#reels-page .reels-topbar h2{pointer-events:auto;}
+#reels-feed-container{scroll-padding-top:0;touch-action:pan-y;scroll-behavior:smooth;}
+.reel-sound-toggle{top:calc(env(safe-area-inset-top,0px) + 82px)!important;right:14px!important;}
 .reel-user{display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer;}
 .reel-user img{width:42px;height:42px;border-radius:50%;border:2px solid #fff;object-fit:cover;}
 .reel-follow-btn{background:transparent;border:1.5px solid #fff;color:#fff;padding:5px 14px;border-radius:18px;font-size:11px;cursor:pointer;font-weight:600;transition:.2s;backdrop-filter:blur(4px);}
@@ -300,6 +308,13 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 /* Legal modal */
 .legal-modal-content{text-align:left;}
 </style>
+
+<style id="image-only-mode">
+/* Image-only mode: keep original app structure intact, but disable audio/video playback and UI. */
+video, audio, .audio-toggle-btn, .reel-sound-toggle, #reels-page, #reels-feed-container, #profile-reels, #tab-reels, .music-item, .music-modal-content, .selected-music-badge { display:none !important; }
+.nav-item[data-page="reels"] { display:none !important; }
+</style>
+
 </head>
 <body>
 
@@ -347,7 +362,7 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 <div class="top-bar">
 <h2 onclick="navigateTo('home')">Golpo</h2>
 <div style="display:flex;gap:16px;align-items:center;">
-<i class="fa-solid fa-clapperboard header-icon" style="color:#667eea;" onclick="navigateTo('reels')"></i>
+<button type="button" class="header-icon" aria-label="Notifications" title="Notifications" onclick="navigateTo('notifications')" style="position:relative;background:transparent;border:0;color:#667eea;cursor:pointer;"><i class="fa-regular fa-bell"></i><span id="top-notif-badge" style="display:none;position:absolute;right:-8px;top:-7px;min-width:16px;height:16px;padding:0 4px;border-radius:20px;background:#ef4444;color:#fff;font-size:10px;line-height:16px;text-align:center;"></span></button>
 <i class="fa-brands fa-facebook-messenger header-icon" onclick="navigateTo('messages')"></i>
 </div>
 </div>
@@ -358,8 +373,11 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 
 <!-- REELS -->
 <div id="reels-page" class="page" style="height:100vh;overflow:hidden;background:#0a0a15;position:relative;">
-<div class="top-bar" style="background:transparent;position:absolute;z-index:100;width:100%;border:none;">
-<h2 style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);">Reels</h2>
+<div class="top-bar reels-topbar" style="position:absolute;top:0;left:0;z-index:1000;width:100%;min-height:64px;box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:10px 16px;background:rgba(10,10,21,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:none;box-shadow:0 4px 18px rgba(0,0,0,.22);">
+<button type="button" aria-label="Back to Home" title="Back to Home" onclick="navigateTo('home')" style="flex:0 0 42px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.24);border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer;">
+<i class="fa-solid fa-arrow-left"></i>
+</button>
+<h2 style="margin:0;color:#fff;font-size:20px;font-weight:700;text-shadow:none;flex:1;">Reels</h2>
 </div>
 <div id="reels-feed-container"></div>
 </div>
@@ -522,7 +540,7 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 <ul>
 <li>Access, edit, or delete your data anytime</li>
 <li>Request account deletion from Profile → Menu → Delete Account. Some records may require server-side cleanup.</li>
-<li>Contact us at <a href="mailto:support@golpo.app">support@golpo.app</a></li>
+<li>Contact us at <a href="mailto:sudiptak503@gmail.com">sudiptak503@gmail.com</a></li>
 </ul>
 <h4>Data Retention and Deletion</h4>
 <p>Account deletion is intended to remove account data, but records in chat subcollections, third-party media hosting (Cloudinary), backups, and legally required moderation records may not be removed by this client-side code. The app owner must implement and test secure server-side cleanup and disclose any retention periods before launch.</p>
@@ -533,7 +551,7 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 <h4>7. Changes</h4>
 <p>We may update this policy. Continued use means you accept the changes.</p>
 <h4>8. Contact</h4>
-<p>Email: <a href="mailto:support@golpo.app">support@golpo.app</a></p>
+<p>Email: <a href="mailto:sudiptak503@gmail.com">sudiptak503@gmail.com</a></p>
 </div>
 <button class="publish-btn" style="margin-top:16px;" onclick="closeModals()">Close</button>
 </div>
@@ -569,7 +587,7 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 <h4>7. Disclaimer</h4>
 <p>Golpo is provided "as is". We are not responsible for user-generated content.</p>
 <h4>8. Contact</h4>
-<p>Email: <a href="mailto:support@golpo.app">support@golpo.app</a></p>
+<p>Email: <a href="mailto:sudiptak503@gmail.com">sudiptak503@gmail.com</a></p>
 </div>
 <button class="publish-btn" style="margin-top:16px;" onclick="closeModals()">Close</button>
 </div>
@@ -618,7 +636,7 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 </ul>
 <h4>Report It</h4>
 <p>If you encounter any content that endangers a child, report it immediately via the in-app report button or email us at:</p>
-<p><a href="mailto:childsafety@golpo.app">childsafety@golpo.app</a></p>
+<p><a href="mailto:sudiptak503@gmail.com">sudiptak503@gmail.com</a></p>
 <h4>Parental Controls</h4>
 <p>Golpo is for users 13+. Parents should monitor their children's online activity.</p>
 </div>
@@ -632,13 +650,13 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 <div class="legal-content">
 <p>We're here to help!</p>
 <h4>Support</h4>
-<p>Email: <a href="mailto:support@golpo.app">support@golpo.app</a></p>
+<p>Email: <a href="mailto:sudiptak503@gmail.com">sudiptak503@gmail.com</a></p>
 <h4>Child Safety</h4>
-<p>Email: <a href="mailto:childsafety@golpo.app">childsafety@golpo.app</a></p>
+<p>Email: <a href="mailto:sudiptak503@gmail.com">sudiptak503@gmail.com</a></p>
 <h4>Report Abuse</h4>
 <p>Use the in-app report button on any post, reel, or story.</p>
 <h4>Business</h4>
-<p>Email: <a href="mailto:business@golpo.app">business@golpo.app</a></p>
+<p>Email: <a href="mailto:startvcorporation786@gmail.com">startvcorporation786@gmail.com</a></p>
 </div>
 <button class="publish-btn" style="margin-top:16px;" onclick="closeModals()">Close</button>
 </div>
@@ -728,9 +746,9 @@ body{background:#fafafa;color:#1a1a2e;overflow-x:hidden;}
 <!-- BOTTOM NAV -->
 <div class="bottom-nav" id="bottom-nav-bar">
 <button class="nav-item active" data-page="home" onclick="navigateTo('home')"><i class="fa-solid fa-house"></i></button>
-<button class="nav-item" data-page="explore" onclick="navigateTo('explore')"><i class="fa-solid fa-magnifying-glass"></i></button>
+<button class="nav-item" data-page="reels" onclick="navigateTo('reels')"><i class="fa-solid fa-clapperboard"></i></button>
 <button class="nav-item upload-btn-nav" onclick="openUploadMenu()"><i class="fa-regular fa-square-plus"></i></button>
-<button class="nav-item" data-page="notifications" onclick="navigateTo('notifications')"><i class="fa-regular fa-heart"></i><span class="notif-badge" id="notif-badge-indicator"></span></button>
+<button class="nav-item" data-page="explore" onclick="navigateTo('explore')"><i class="fa-solid fa-magnifying-glass"></i></button>
 <button class="nav-item" data-page="profile" onclick="viewProfile()"><i class="fa-regular fa-circle-user"></i></button>
 </div>
 
@@ -922,6 +940,31 @@ let activeStoryUser=null;
 let unreadNotifCount=0;
 let lastVisiblePost=null, isLoadingPosts=false;
 window.viewedPostsSession=new Set();
+// Per-user feed exposure history: repeated items remain available but gradually rank lower.
+window.feedSeenThisSession=window.feedSeenThisSession||new Set();
+window.getFeedExposureCount=function(type,id){
+  try{return Number(JSON.parse(localStorage.getItem(`golpo_feed_seen_${currentUser?.uid||"guest"}`)||"{}")[`${type}:${id}`]||0);}catch(e){return 0;}
+};
+window.markFeedExposure=function(type,id){
+  if(!id) return;
+  const key=`${type}:${id}`;
+  if(window.feedSeenThisSession.has(key)) return;
+  window.feedSeenThisSession.add(key);
+  try{
+    const storeKey=`golpo_feed_seen_${currentUser?.uid||"guest"}`;
+    const data=JSON.parse(localStorage.getItem(storeKey)||"{}");
+    data[key]=Math.min(3,Number(data[key]||0)+1);
+    localStorage.setItem(storeKey,JSON.stringify(data));
+  }catch(e){}
+};
+function feedTimestamp(item){const t=item?.timestamp;return t?.toMillis?t.toMillis():(typeof t==='number'?t:(t?.seconds?t.seconds*1000:0));}
+function sortFreshFeed(items,type){
+  return [...items].sort((a,b)=>{
+    const ta=feedTimestamp(a),tb=feedTimestamp(b);
+    if(tb!==ta) return tb-ta; // newest content always first
+    return window.getFeedExposureCount(type,a.id)-window.getFeedExposureCount(type,b.id);
+  });
+}
 let selMusicUrl=null, selMusicName="", selAudioFile=null, previewAudioObj=null;
 window.upType='';
 let selFile=null;
@@ -931,7 +974,7 @@ let actChatU=null, chatUnsub=null;
 let actStoryU=null, actStoryIdx=0, stTime, isMySt=false, actStArr=[];
 let postToShare=null, shareMediaType='post';
 let touchstartX=0, touchendX=0;
-window.isReelsMuted=true;
+window.isReelsMuted=false;
 window.allReelsGlobal=[];
 window.globalProfileUid=null;
 
@@ -977,7 +1020,7 @@ function formatPostDate(ts){
 // ==========================================
 // NAVIGATION
 // ==========================================
-window.navigateTo = (page) => {
+window.navigateTo = (page, targetReelId = null) => {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(page!=='home'){
@@ -986,16 +1029,18 @@ window.navigateTo = (page) => {
   }
   const target = document.getElementById(page+'-page');
   if(target) target.classList.add('active');
-  document.getElementById('bottom-nav-bar').style.display = (page==='chat'||page==='messages'||page==='admin-panel')?'none':'flex';
+  document.getElementById('bottom-nav-bar').style.display = (page==='chat'||page==='messages'||page==='admin-panel'||page==='reels')?'none':'flex';
+  const earnWidget=document.getElementById('premium-earning-widget'); if(earnWidget) earnWidget.style.display=(page==='reels')?'none':'';
   const navBtn = document.querySelector(`.nav-item[data-page="${page}"]`);
   if(navBtn) navBtn.classList.add('active');
   if(page==='profile') loadProfile();
   if(page==='messages') renderMessagesList();
   if(page==='admin-panel'){ window.loadAdminPanel(); window.showAdminSection('users'); }
-  if(page==='reels') window.loadReels(); else document.querySelectorAll('.reel-video').forEach(v=>v.pause());
+  if(page==='reels') window.loadReels(targetReelId); else document.querySelectorAll('.reel-video').forEach(v=>v.pause());
   if(page==='notifications'){
     localStorage.setItem('lastNotifCheck',Date.now());
     document.getElementById('notif-badge-indicator').style.display='none';
+    const topBadge=document.getElementById('top-notif-badge'); if(topBadge) topBadge.style.display='none';
     unreadNotifCount=0;
   }
   if(page==='home' && typeof window.resumeAllAudio==='function') setTimeout(()=>window.resumeAllAudio(),150);
@@ -1050,6 +1095,7 @@ onAuthStateChanged(auth,async(user)=>{
       return;
     }
     currentUser=user;
+    allPosts=[]; lastVisiblePost=null; isLoadingPosts=false; window.postsListenerReady=false; window.reelsListenerReady=false;
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('main-app').classList.remove('hidden');
     if(user.email==="sudeep@gmail.com"||user.email==="admin@gmail.com"){
@@ -1117,10 +1163,11 @@ window.addEventListener('scroll',()=>{
 function loadAllData(){
   document.getElementById('global-loader').classList.remove('hidden');
   document.getElementById('loader-text').innerText="Loading Feed...";
-  getDocs(collection(db,"users")).then((snap)=>{
+  if(window.usersRealtimeUnsub) window.usersRealtimeUnsub();
+  window.usersRealtimeUnsub = onSnapshot(collection(db,"users"),(snap)=>{
     allUsers=[];
-    snap.forEach(doc=>{
-      const u = {id:doc.id,...doc.data()};
+    snap.forEach(userDoc=>{
+      const u = {id:userDoc.id,...userDoc.data()};
       if(!u.isDeleted) allUsers.push(u);
     });
     const myUsr = allUsers.find(u=>u.uid===currentUser.uid);
@@ -1131,15 +1178,79 @@ function loadAllData(){
     if(document.getElementById('profile-page').classList.contains('active')) loadProfile();
     if(document.getElementById('messages-page').classList.contains('active')) renderMessagesList();
     renderStoryBar();
+    // Do not rebuild the visible feed on every user snapshot; this avoids scroll jumps.
+    if(document.getElementById('reels-page').classList.contains('active')) window.loadReels();
   });
-  loadPostsPagination();
+  // Realtime listener only tracks the newest 25 posts. It does not force a page refresh or reset scroll.
+  if(window.postsRealtimeUnsub) window.postsRealtimeUnsub();
+  window.postsRealtimeUnsub = onSnapshot(query(collection(db,"posts"),orderBy("timestamp","desc"),limit(25)),(snap)=>{
+    const incoming=[];
+    snap.forEach(postDoc=>incoming.push({id:postDoc.id,...postDoc.data()}));
+    const knownIds=new Set(allPosts.map(p=>p.id));
+    const firstPostsSnapshot=!window.postsListenerReady;
+    const newlyArrived=firstPostsSnapshot?[]:incoming.filter(p=>!knownIds.has(p.id));
+    window.postsListenerReady=true;
+    if(firstPostsSnapshot && snap.docs.length){ lastVisiblePost=snap.docs[snap.docs.length-1]; }
+    incoming.forEach(p=>{
+      const i=allPosts.findIndex(x=>x.id===p.id);
+      if(i>=0) allPosts[i]={...allPosts[i],...p};
+      else allPosts.push(p);
+    });
+    allPosts.sort((a,b)=>{
+      const ta=a.timestamp?.toMillis?a.timestamp.toMillis():(a.timestamp||0);
+      const tb=b.timestamp?.toMillis?b.timestamp.toMillis():(b.timestamp||0);
+      return tb-ta;
+    });
+    // Update like counts/icons in place, without rebuilding the feed.
+    incoming.forEach(post=>{
+      const count=document.getElementById(`likes-count-${post.id}`);
+      if(count) count.textContent=`${(post.likes||[]).length} likes`;
+      const card=document.querySelector(`[data-post-id="${post.id}"]`);
+      const heart=card?.querySelector('.post-actions .fa-heart');
+      if(heart){ const liked=(post.likes||[]).includes(currentUser?.uid); heart.classList.toggle('fa-solid',liked); heart.classList.toggle('fa-regular',!liked); heart.classList.toggle('liked',liked); heart.style.color=liked?'#ef4444':''; heart.setAttribute('onclick',`togglePostLike('${post.id}','${post.uid}',${liked})`); }
+    });
+    if(firstPostsSnapshot){ loadPostsPagination(); }
+    if(newlyArrived.length && document.getElementById('home-page').classList.contains('active')){
+      let notice=document.getElementById('new-content-notice');
+      if(!notice){
+        notice=document.createElement('button'); notice.id='new-content-notice'; notice.type='button';
+        notice.style.cssText='position:sticky;top:62px;z-index:90;display:block;margin:8px auto;padding:10px 16px;border:0;border-radius:22px;background:#667eea;color:#fff;font-weight:600;box-shadow:0 4px 14px #667eea44;';
+        notice.onclick=()=>{ notice.remove(); renderHomeFeed(); window.scrollTo({top:0,behavior:'smooth'}); };
+        const home=document.getElementById('home-page'); home.insertBefore(notice,document.getElementById('home-feed'));
+      }
+      notice.textContent=`${newlyArrived.length} new post${newlyArrived.length===1?'':'s'} · Tap to view`;
+    }
+  },(err)=>console.warn('Realtime posts listener:',err));
+  if(window.reelsRealtimeUnsub) window.reelsRealtimeUnsub();
+  window.reelsRealtimeUnsub = onSnapshot(collection(db,"reels"),(snap)=>{
+    const latest=[];
+    snap.forEach(reelDoc=>latest.push({id:reelDoc.id,...reelDoc.data()}));
+    const firstReelsSnapshot=!window.reelsListenerReady;
+    const previousIds=new Set((window.allReelsGlobal||[]).map(r=>r.id));
+    const newReels=firstReelsSnapshot?[]:latest.filter(r=>!previousIds.has(r.id));
+    window.reelsListenerReady=true;
+    window.allReelsGlobal=latest;
+    // Don't reset the current viewer/feed on every metadata update; queue new reels until the user taps.
+    if(newReels.length && document.getElementById('home-page').classList.contains('active')){
+      let notice=document.getElementById('new-content-notice');
+      if(!notice){
+        notice=document.createElement('button'); notice.id='new-content-notice'; notice.type='button';
+        notice.style.cssText='position:sticky;top:62px;z-index:90;display:block;margin:8px auto;padding:10px 16px;border:0;border-radius:22px;background:#667eea;color:#fff;font-weight:600;box-shadow:0 4px 14px #667eea44;';
+        notice.onclick=()=>{ notice.remove(); renderHomeFeed(); window.scrollTo({top:0,behavior:'smooth'}); };
+        document.getElementById('home-page').insertBefore(notice,document.getElementById('home-feed'));
+      }
+      notice.textContent=`${newReels.length} new reel${newReels.length===1?'':'s'} · Tap to view`;
+    }
+    if(document.getElementById('reels-page').classList.contains('active') && newReels.length) window.loadReels();
+    else if(document.getElementById('home-page').classList.contains('active') && document.getElementById('home-feed').children.length===0) renderHomeFeed();
+  });
   onSnapshot(collection(db,"stories"),(snap)=>{
     const now=Date.now();
     groupedStories={};
     myActiveStories=[];
     snap.forEach(docData=>{
       const data={id:docData.id,...docData.data()};
-      if(data.expiresAt && data.expiresAt.toMillis()>now){
+      if(data.expiresAt && data.expiresAt.toMillis()>now && isAllowedImageRecord(data)){
         if(data.uid===currentUser.uid) myActiveStories.push(data);
         else{
           if(!groupedStories[data.uid]) groupedStories[data.uid]=[];
@@ -1180,6 +1291,8 @@ function listenToNotifications(){
       const badge=document.getElementById('notif-badge-indicator');
       badge.innerText=newNotifCount>9?'9+':newNotifCount;
       badge.style.display='flex';
+      const topBadge=document.getElementById('top-notif-badge');
+      if(topBadge){topBadge.innerText=badge.innerText;topBadge.style.display='flex';}
     }
     if(notifs.length===0){
       list.innerHTML='<p style="padding:20px;text-align:center;color:#8892a6;">No new notifications.</p>';
@@ -1246,13 +1359,37 @@ function getMixedFeed(){
     else if(oIdx<others.length) candidate=others[oIdx++];
     if(candidate){ mixed.push(candidate); lastUid=candidate.uid; }
   }
-  return mixed;
+  // Keep the newest items at the top; among equally dated items, prefer content shown fewer times.
+  return sortFreshFeed(mixed,'post');
+}
+
+window.toggleHomeReelSound = (reelId,button) => {
+  const video=document.querySelector(`video[data-reel-preview="${reelId}"]`);
+  if(!video)return;
+  const willUnmute=video.muted;
+  document.querySelectorAll('.home-reel-video').forEach(v=>{if(v!==video){v.muted=true;}});
+  video.muted=!willUnmute;
+  if(!video.paused) video.play().catch(()=>{}); else video.play().catch(()=>{});
+  button.innerHTML=video.muted?'<i class="fa-solid fa-volume-xmark"></i>':'<i class="fa-solid fa-volume-high"></i>';
+  if(!video.muted) showToast('Reel sound on');
+};
+
+function isAllowedImageRecord(item){
+  if(!item || typeof item.mediaUrl !== 'string' || !item.mediaUrl.trim()) return false;
+  const url=item.mediaUrl.trim().toLowerCase().split(/[?#]/)[0];
+  const kind=String(item.mediaType||item.type||item.resourceType||'').toLowerCase();
+  if(kind.includes('video') || kind.includes('audio') || kind.includes('reel')) return false;
+  if(/\.(mp4|m4v|webm|mov|avi|mkv|m3u8|mp3|m4a|aac|wav|ogg|oga|opus|flac|wma)$/i.test(url)) return false;
+  if(url.includes('/video/upload/') || url.includes('resourcetype=video') || url.startsWith('blob:')) return false;
+  if(item.audioUrl || item.videoUrl) return false;
+  return true;
 }
 
 function renderHomeFeed(){
+  const notice=document.getElementById("new-content-notice"); if(notice) notice.remove();
   const feed=document.getElementById("home-feed");
   feed.innerHTML='';
-  const mixedPosts=getMixedFeed().filter(post=>!isUserBlockedLocally(post.uid)&&!((allUsers.find(x=>x.uid===post.uid)?.blockedUsers||[]).includes(currentUser.uid)));
+  const mixedPosts=getMixedFeed().filter(post=>isAllowedImageRecord(post)&&!isUserBlockedLocally(post.uid)&&!((allUsers.find(x=>x.uid===post.uid)?.blockedUsers||[]).includes(currentUser.uid)));
   let adCounter=0;
   mixedPosts.forEach(post=>{
     const u=allUsers.find(usr=>usr.uid===post.uid)||{name:'User',avatar:'https://picsum.photos/100'};
@@ -1263,18 +1400,8 @@ function renderHomeFeed(){
 
     let avatarHtml=`<img src="${u.avatar}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;">`;
     if(hasUnviewedStory) avatarHtml=`<div class="feed-story-ring has-story"><img src="${u.avatar}"></div>`;
-    let videoMuted = post.musicUrl?'muted':'';
-    let mediaHtml = post.mediaUrl.match(/\.(mp4|webm|mov)$/i)
-      ? `<video class="post-media" src="${post.mediaUrl}" controls loop ${videoMuted}></video>`
-      : `<img class="post-media" src="${post.mediaUrl}">`;
-    let audioHtml = post.musicUrl?`
-      <audio id="post-audio-${post.id}" src="${post.musicUrl}" loop preload="auto"></audio>
-      <div class="audio-toggle-btn" onclick="togglePostAudio('${post.id}')" id="audio-btn-${post.id}"><i class="fas fa-volume-mute"></i></div>
-      <div style="padding:6px 16px;font-size:12px;color:#1a1a2e;background:#f8fafc;border-bottom:1px solid #eef2f7;display:flex;align-items:center;">
-        <i class="fas fa-music" style="color:#667eea;margin-right:8px;animation:spin 3s linear infinite;"></i> 
-        <marquee scrollamount="4" style="width:100%;vertical-align:middle;font-weight:500;">${post.musicName} • Original Audio</marquee>
-      </div>
-    `:'';
+    const mediaHtml = `<img class="post-media" src="${post.mediaUrl}" alt="Post photo" loading="lazy">`;
+    const audioHtml = '';
     const div=document.createElement('div');
     div.className='post-card';
     div.setAttribute('data-post-id',post.id);
@@ -1314,13 +1441,44 @@ function renderHomeFeed(){
       feed.appendChild(ad);
     }
   });
+  // Video/reel cards are intentionally not included in the image-only feed.
+  // Mix posts and Reels together instead of grouping by upload type/time.
+  // Keep each item's random position stable for this user so realtime updates don't reshuffle the whole feed.
+  const mixKey=`golpo_feed_mix_${currentUser?.uid||'guest'}`;
+  let mixRanks={};
+  try { mixRanks=JSON.parse(localStorage.getItem(mixKey)||'{}'); } catch(e) { mixRanks={}; }
+  const contentCards=Array.from(feed.querySelectorAll('.post-card'));
+  contentCards.forEach(card=>{
+    const type=card.dataset.feedContentType||'post';
+    const id=card.dataset.feedContentId||card.dataset.postId||card.getAttribute('data-post-id');
+    const key=`${type}:${id}`;
+    if(!mixRanks[key]) mixRanks[key]=Math.random();
+    card.dataset.mixRank=String(mixRanks[key]);
+  });
+  try { localStorage.setItem(mixKey,JSON.stringify(mixRanks)); } catch(e) {}
+  feed.querySelectorAll('.ad-slot').forEach(ad=>ad.remove());
+  contentCards.sort((a,b)=>Number(a.dataset.mixRank)-Number(b.dataset.mixRank));
+  feed.innerHTML='';
+  contentCards.forEach((card,index)=>{
+    feed.appendChild(card);
+    if((index+1)%5===0){
+      const ad=document.createElement('div');
+      ad.className='ad-slot'; ad.style.margin='0 0 14px 0'; ad.style.borderRadius='0';
+      ad.innerHTML='<i class="fa-solid fa-rectangle-ad"></i> SPONSORED • AdMob will serve here in production';
+      feed.appendChild(ad);
+    }
+  });
   if(window.feedObserver) window.feedObserver.disconnect();
   window.feedObserver=new IntersectionObserver((entries)=>{
     entries.forEach(entry=>{
       const audios=entry.target.querySelectorAll('audio');
       const videos=entry.target.querySelectorAll('video');
       if(entry.isIntersecting){
+        const feedType=entry.target.dataset.feedContentType;
+        const feedId=entry.target.dataset.feedContentId;
+        if(feedType && feedId) window.markFeedExposure(feedType,feedId);
         let pid=entry.target.getAttribute('data-post-id');
+        if(pid) window.markFeedExposure('post',pid);
         if(pid && !window.viewedPostsSession.has(pid)){
           window.viewedPostsSession.add(pid);
           let p=allPosts.find(x=>x.id===pid);
@@ -1505,8 +1663,13 @@ window.searchUsers = () => {
 function renderExploreGrid(q){
   const grid=document.getElementById("explore-grid");
   grid.innerHTML='';
-  let f=allUsers.filter(u=>u.uid!==currentUser.uid&&!isUserBlockedLocally(u.uid)&&!(u.blockedUsers||[]).includes(currentUser.uid));
-  if(q) f=f.filter(u=>(u.name||'').toLowerCase().includes(q));
+  const recentChatIds=JSON.parse(localStorage.getItem('golpo_recent_chats_'+(currentUser?.uid||''))||'[]');
+  const myProfile=allUsers.find(u=>(u.uid||u.id)===currentUser?.uid)||{};
+  const following=Array.isArray(myProfile.following)?myProfile.following:[];
+  let f=allUsers.filter(u=>{const uid=u.uid||u.id;return uid&&uid!==currentUser?.uid&&!isUserBlockedLocally(uid)&&!(u.blockedUsers||[]).includes(currentUser?.uid);});
+  // Default view prioritizes people followed and recent chats. Typing a search searches all Firebase-loaded users.
+  if(q) f=f.filter(u=>(u.name||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
+  else f.sort((a,b)=>{const au=a.uid||a.id,bu=b.uid||b.id;const ar=recentChatIds.includes(au)?2:(following.includes(au)?1:0);const br=recentChatIds.includes(bu)?2:(following.includes(bu)?1:0);return br-ar||(a.name||'').localeCompare(b.name||'');});
   f.forEach(user=>{
     const div=document.createElement('div');
     div.className='grid-item';
@@ -1563,7 +1726,7 @@ function renderStoryBar(){
 // ==========================================
 window.openPostViewer = (postId) => {
   const post=allPosts.find(p=>p.id===postId);
-  if(!post) return showToast("Post unavailable");
+  if(!post || !isAllowedImageRecord(post)) return showToast("এই পোস্টটি ছবি নয়, তাই দেখানো যাবে না।");
   const userObj=allUsers.find(u=>u.uid===post.uid)||{name:'User',avatar:'https://picsum.photos/100'};
   const isLiked=post.likes && post.likes.includes(currentUser.uid);
   const likeCount=post.likes?post.likes.length:0;
@@ -1572,34 +1735,8 @@ window.openPostViewer = (postId) => {
   document.getElementById('pv-user-info').innerHTML=`<img src="${userObj.avatar}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;"><span>${userObj.name}</span>`;
 
   const mediaContainer=document.getElementById('pv-media');
-  let videoMuted=post.musicUrl?'muted':'';
-  let mediaHtml=post.mediaUrl.match(/\.(mp4|webm|mov)$/i)
-    ? `<video src="${post.mediaUrl}" controls ${videoMuted} style="max-width:100%;max-height:50vh;"></video>`
-    : `<img src="${post.mediaUrl}" style="max-width:100%;max-height:50vh;object-fit:contain;">`;
-  if(post.musicUrl){
-    mediaHtml+=`
-      <audio id="pv-audio" src="${post.musicUrl}" loop></audio>
-      <div class="audio-toggle-btn playing" onclick="togglePvAudio()" id="pv-audio-btn" style="bottom:40px;"><i class="fas fa-volume-up"></i></div>
-      <div style="position:absolute;bottom:0;left:0;width:100%;padding:6px 16px;font-size:12px;color:#fff;background:rgba(0,0,0,.5);display:flex;align-items:center;">
-        <i class="fas fa-music" style="margin-right:8px;animation:spin 3s linear infinite;"></i> 
-        <marquee scrollamount="4" style="width:100%;vertical-align:middle;font-weight:500;">${post.musicName||'Original Audio'}</marquee>
-      </div>`;
-  }
+  const mediaHtml=`<img src="${post.mediaUrl}" alt="Post photo" style="max-width:100%;max-height:50vh;object-fit:contain;">`;
   mediaContainer.innerHTML=mediaHtml;
-  if(post.musicUrl){
-    setTimeout(()=>{
-      const pvAudio=document.getElementById('pv-audio');
-      if(pvAudio){
-        let pp=pvAudio.play();
-        if(pp!==undefined){
-          pp.catch(()=>{
-            const btn=document.getElementById('pv-audio-btn');
-            if(btn){btn.innerHTML='<i class="fas fa-volume-mute"></i>';btn.classList.remove('playing');}
-          });
-        }
-      }
-    },100);
-  }
   document.getElementById('pv-actions').innerHTML=`<i id="pv-heart-icon" class="${isLiked?'fa-solid liked':'fa-regular'} fa-heart" style="${isLiked?'color:#ef4444;':''}cursor:pointer;" onclick="toggleModalLike('${post.id}','${post.uid}')"></i><i class="fa-regular fa-comment" style="cursor:pointer;margin-left:16px;" onclick="openComments('${post.id}','${post.uid}')"></i><i class="fa-regular fa-paper-plane" style="cursor:pointer;margin-left:16px;" onclick="openShareModal('${post.id}')"></i>`;
 
   // menu button
@@ -1666,7 +1803,7 @@ window.viewProfile = (uid) => {
 async function loadProfile(){
   if(!currentUser) return;
   const uid=currentProfileViewUid||currentUser.uid;
-  let u=allUsers.find(usr=>usr.uid===uid);
+  let u=allUsers.find(usr=>(usr.uid||usr.id)===uid || usr.id===uid);
   if(!u){
     if(uid===currentUser.uid) u={name:"My Profile",bio:"Available",avatar:"https://picsum.photos/200",followers:[],following:[]};
     else return;
@@ -1687,7 +1824,7 @@ async function loadProfile(){
     ab.style.display='flex';
     menuIcon.style.display='block';
   }else{
-    const isFol=(u.followers||[]).includes(currentUser.uid);
+    const isFol=(u.followers||[]).includes(currentUser.uid) || (allUsers.find(me=>(me.uid||me.id)===currentUser.uid)?.following||[]).includes(uid);
     ac.innerHTML=`<button class="action-btn ${isFol?'':'primary'}" id="profile-follow-btn" onclick="toggleFollow('${uid}',${isFol})">${isFol?'Following':'Follow'}</button>
     <button class="action-btn" onclick="openChat('${uid}')">Message</button>
     <button class="action-btn" id="profile-block-btn" style="flex:0 0 44px;background:#fff1f2;border-color:#fecdd3;color:#e11d48;" aria-label="Block user" title="Block user" onclick="window.toggleBlockUser('${uid}')"><i class="fa-solid fa-ban"></i></button>
@@ -1703,7 +1840,7 @@ async function loadProfile(){
   getDocs(q).then((snap)=>{
     grid.innerHTML='';
     let userPosts=[];
-    snap.forEach(docSnap=>{ userPosts.push({id:docSnap.id,...docSnap.data()}); });
+    snap.forEach(docSnap=>{ const item={id:docSnap.id,...docSnap.data()}; if(isAllowedImageRecord(item)) userPosts.push(item); });
     userPosts.sort((a,b)=>{
       const timeA=a.timestamp?.toMillis?a.timestamp.toMillis():(a.timestamp||0);
       const timeB=b.timestamp?.toMillis?b.timestamp.toMillis():(b.timestamp||0);
@@ -1719,7 +1856,7 @@ async function loadProfile(){
       const div=document.createElement('div');
       div.className='grid-item';
       div.onclick=()=>openPostViewer(p.id);
-      div.innerHTML=p.mediaUrl.match(/\.(mp4|webm|mov)$/i)?`<video src="${p.mediaUrl}" muted></video>`:`<img src="${p.mediaUrl}">`;
+      div.innerHTML=`<img src="${p.mediaUrl}" alt="Post photo" loading="lazy">`;
       grid.appendChild(div);
     });
   }).catch(()=>{
@@ -1854,7 +1991,7 @@ window.confirmDeleteAccount = async () => {
     loader.classList.add('hidden');
     const msg = e?.code === 'auth/requires-recent-login'
       ? 'For security, log out, log in again, then retry account deletion.'
-      : 'Deletion did not fully complete. Contact support@golpo.app for assistance.';
+      : 'Deletion did not fully complete. Contact sudiptak503@gmail.com for assistance.';
     showToast(msg);
   }
 };
@@ -1863,38 +2000,57 @@ window.confirmDeleteAccount = async () => {
 // FOLLOW & LIKE
 // ==========================================
 window.toggleFollow = async (targetUid,isFollowing) => {
-  const targetUser=allUsers.find(u=>u.uid===targetUid);
-  const myUser=allUsers.find(u=>u.uid===currentUser.uid);
-  if(targetUser){
-    if(!targetUser.followers) targetUser.followers=[];
-    if(isFollowing) targetUser.followers=targetUser.followers.filter(id=>id!==currentUser.uid);
-    else if(!targetUser.followers.includes(currentUser.uid)) targetUser.followers.push(currentUser.uid);
-  }
-  if(myUser){
-    if(!myUser.following) myUser.following=[];
-    if(isFollowing) myUser.following=myUser.following.filter(id=>id!==targetUid);
-    else if(!myUser.following.includes(targetUid)) myUser.following.push(targetUid);
-  }
+  if(!currentUser || !targetUid || targetUid===currentUser.uid) return;
+  const targetUser=allUsers.find(u=>(u.uid||u.id)===targetUid || u.id===targetUid);
+  const myUser=allUsers.find(u=>(u.uid||u.id)===currentUser.uid || u.id===currentUser.uid);
+  if(!targetUser){ showToast('Could not find this user. Please reopen the profile.'); return; }
+  const targetDocId=targetUser.id || targetUser.uid || targetUid;
+  const myDocId=myUser?.id || currentUser.uid;
   const btn=document.getElementById('profile-follow-btn');
-  if(btn && currentProfileViewUid===targetUid){
-    if(isFollowing){ btn.innerText='Follow'; btn.classList.add('primary'); }
-    else{ btn.innerText='Following'; btn.classList.remove('primary'); }
-    btn.setAttribute('onclick',`toggleFollow('${targetUid}',${!isFollowing})`);
-    const followersStat=document.getElementById("stat-followers");
-    if(followersStat){
-      let count=parseInt(followersStat.innerText)||0;
-      followersStat.innerText=isFollowing?Math.max(0,count-1):count+1;
+  if(btn && currentProfileViewUid===targetUid) btn.disabled=true;
+  try{
+    const targetRef=doc(db,'users',targetDocId);
+    const myRef=doc(db,'users',myDocId);
+    // Read the latest state from Firestore so a stale button label cannot reverse the action.
+    const [targetSnap,mySnap]=await Promise.all([getDoc(targetRef),getDoc(myRef)]);
+    if(!targetSnap.exists() || !mySnap.exists()) throw new Error('User document missing');
+    const targetData=targetSnap.data()||{};
+    const myData=mySnap.data()||{};
+    const currentlyFollowing=(Array.isArray(targetData.followers) && targetData.followers.includes(currentUser.uid)) ||
+      (Array.isArray(myData.following) && myData.following.includes(targetUid));
+    if(currentlyFollowing){
+      await Promise.all([
+        updateDoc(targetRef,{followers:arrayRemove(currentUser.uid)}),
+        updateDoc(myRef,{following:arrayRemove(targetUid)})
+      ]);
+    }else{
+      await Promise.all([
+        updateDoc(targetRef,{followers:arrayUnion(currentUser.uid)}),
+        updateDoc(myRef,{following:arrayUnion(targetUid)})
+      ]);
+      try{ await sendNotification(targetUid,'follow'); }catch(notificationError){ console.warn('Follow saved, but notification could not be sent:',notificationError); }
     }
-  }
-  const tr=doc(db,"users",targetUid);
-  const mr=doc(db,"users",currentUser.uid);
-  if(isFollowing){
-    await updateDoc(tr,{followers:arrayRemove(currentUser.uid)});
-    await updateDoc(mr,{following:arrayRemove(targetUid)});
-  }else{
-    await updateDoc(tr,{followers:arrayUnion(currentUser.uid)});
-    await updateDoc(mr,{following:arrayUnion(targetUid)});
-    sendNotification(targetUid,'follow');
+    const updatedIsFollowing=!currentlyFollowing;
+    // Update local state immediately; Firestore listeners then reconcile other clients.
+    const localTarget=allUsers.find(u=>u.id===targetDocId);
+    const localMe=allUsers.find(u=>u.id===myDocId);
+    if(localTarget){ localTarget.followers=Array.isArray(localTarget.followers)?localTarget.followers:[]; localTarget.followers=updatedIsFollowing?[...new Set([...localTarget.followers,currentUser.uid])]:localTarget.followers.filter(x=>x!==currentUser.uid); }
+    if(localMe){ localMe.following=Array.isArray(localMe.following)?localMe.following:[]; localMe.following=updatedIsFollowing?[...new Set([...localMe.following,targetUid])]:localMe.following.filter(x=>x!==targetUid); }
+    if(btn && currentProfileViewUid===targetUid){
+      btn.innerText=updatedIsFollowing?'Following':'Follow';
+      btn.classList.toggle('primary',!updatedIsFollowing);
+      btn.setAttribute('onclick',`toggleFollow('${targetUid}',${updatedIsFollowing})`);
+      btn.disabled=false;
+    }
+    const stat=document.getElementById('stat-followers');
+    if(stat && currentProfileViewUid===targetUid) stat.innerText=(localTarget?.followers||targetData.followers||[]).length;
+    const followingStat=document.getElementById('stat-following');
+    if(followingStat && currentProfileViewUid===currentUser.uid) followingStat.innerText=(localMe?.following||myData.following||[]).length;
+  }catch(err){
+    console.error('Follow update failed:',err);
+    showToast(err?.code==='permission-denied'?'Follow was blocked by Firestore security rules.':'Follow update failed. Check connection and Firestore permissions.');
+  }finally{
+    if(btn && currentProfileViewUid===targetUid) btn.disabled=false;
   }
 };
 
@@ -1956,7 +2112,7 @@ function renderComments(){
           <div style="font-size:11px;color:#8892a6;margin-top:6px;display:flex;gap:16px;align-items:center;">
             <span>${formatPostDate(c.timestamp)}</span>
             <span style="font-weight:600;cursor:pointer;color:#667eea;" onclick="replyToComment('${u.name.replace(/'/g,"\\'")}')">Reply</span>
-            ${c.uid!==currentUser.uid?`<span style="font-weight:600;cursor:pointer;color:#ef4444;" onclick="openReportModal('comment','${actComId}','${c.uid}')">Report</span>`:''}
+            ${c.uid===currentUser.uid?`<span style="font-weight:600;cursor:pointer;color:#ef4444;" onclick="deleteOwnComment('${actComId}',${JSON.stringify(c.timestamp)})">Delete</span>`:`<span style="font-weight:600;cursor:pointer;color:#ef4444;" onclick="openReportModal('comment','${actComId}','${c.uid}')">Report</span>`}
           </div>
         </div>`;
       l.appendChild(d);
@@ -1966,6 +2122,11 @@ function renderComments(){
     l.innerHTML='<div style="text-align:center;padding:20px;color:#8892a6;">No comments yet. Be the first to comment!</div>';
   }
 }
+
+window.deleteOwnComment=async(postId,timestamp)=>{
+  if(!auth.currentUser)return;const post=allPosts.find(p=>p.id===postId);if(!post)return;const target=(post.comments||[]).find(c=>c.uid===auth.currentUser.uid&&c.timestamp===timestamp);if(!target)return;
+  try{await updateDoc(doc(db,'posts',postId),{comments:arrayRemove(target)});post.comments=(post.comments||[]).filter(c=>!(c.uid===auth.currentUser.uid&&c.timestamp===timestamp));renderComments();showToast('Comment deleted');}catch(e){showToast('Could not delete comment');}
+};
 
 window.replyToComment = (username) => {
   const input=document.getElementById('new-comment-text');
@@ -2131,24 +2292,19 @@ window.triggerFileSelect = (t) => {
   const fileInput=document.getElementById('mediaFile');
   fileInput.value="";
   if(t==='post') fileInput.accept='image/*';
-  else fileInput.accept='image/*, video/*';
+  else fileInput.accept='image/*';
   setTimeout(()=>fileInput.click(),50);
 };
 
 window.triggerReelSelect = () => {
-  window.upType='reel';
-  document.getElementById('upload-menu-modal').classList.add('hidden');
-  const fileInput=document.getElementById('mediaFile');
-  fileInput.value="";
-  fileInput.accept='video/*';
-  setTimeout(()=>fileInput.click(),50);
+  showToast('ভিডিও/রিল আপলোড বন্ধ করা হয়েছে।'); return;
 };
 
 window.showPreviewModal = () => {
   selFile=document.getElementById("mediaFile").files[0];
   if(!selFile) return;
-  if(window.upType==='post' && selFile.type.startsWith('video/')){
-    showToast("Post শুধুমাত্র ফটো সাপোর্ট করে।");
+  if(!selFile.type || !selFile.type.startsWith('image/')){
+    showToast("শুধুমাত্র ছবি আপলোড করা যাবে।");
     document.getElementById("mediaFile").value="";
     selFile=null;
     return;
@@ -2156,9 +2312,7 @@ window.showPreviewModal = () => {
   const titleMap={'post':'New Post','story':'New Story','reel':'New Reel'};
   document.getElementById('preview-title').innerText=titleMap[window.upType]||'New Post';
   const u=URL.createObjectURL(selFile);
-  document.getElementById('preview-container').innerHTML=selFile.type.startsWith('video/')
-    ? `<video src="${u}" controls></video>`
-    : `<img src="${u}">`;
+  document.getElementById('preview-container').innerHTML=`<img src="${u}" alt="Photo preview">`;
   document.getElementById('upload-caption').style.display=(window.upType==='post'||window.upType==='reel')?'block':'none';
   document.getElementById('preview-modal').classList.remove('hidden');
 };
@@ -2316,8 +2470,8 @@ async function handlePostStoryPublish(file){
   stat.innerText="Compressing Media...";
   bar.style.width="0%";
   txt.innerText="0%";
-  let finalMusicUrl=selMusicUrl;
-  let finalMusicName=selMusicName;
+  let finalMusicUrl=null;
+  let finalMusicName='';
   try{
     const compFile=await compressImage(file);
     stat.innerText="Uploading Media...";
@@ -2342,7 +2496,6 @@ async function handlePostStoryPublish(file){
       caption:document.getElementById('upload-caption').value,
       timestamp:serverTimestamp(),
       views:0,
-      ...(finalMusicUrl && { musicUrl:finalMusicUrl, musicName:finalMusicName }),
       ...(window.upType==='story' && {
         expiresAt:new Date(Date.now()+24*60*60*1000),
         viewers:[],likes:[],comments:[]
@@ -2490,12 +2643,13 @@ window.renderShareList = () => {
   const q=document.getElementById("shareSearchInput").value.toLowerCase();
   const l=document.getElementById("share-users-list");
   l.innerHTML='';
-  let f=allUsers.filter(u=>u.uid!==currentUser.uid&&!isUserBlockedLocally(u.uid)&&!(u.blockedUsers||[]).includes(currentUser.uid));
+  const recentChatIds=JSON.parse(localStorage.getItem('golpo_recent_chats_'+(currentUser?.uid||''))||'[]');
+  let f=allUsers.filter(u=>u.uid!==currentUser.uid&&recentChatIds.includes(u.uid)&&!isUserBlockedLocally(u.uid)&&!(u.blockedUsers||[]).includes(currentUser.uid));
   if(q) f=f.filter(u=>(u.name||'').toLowerCase().includes(q));
   f.forEach(u=>{
     const d=document.createElement('div');
     d.className='share-user-item';
-    d.innerHTML=`<div class="share-user-info"><img src="${u.avatar}"> <span style="font-weight:500;">${u.name}</span></div><button class="send-btn" id="send-btn-${u.uid}" onclick="sendSharedPost('${u.uid}')">Send</button>`;
+    d.innerHTML=`<div class="share-user-info"><img src="${u.avatar}"> <span style="font-weight:500;">${u.name}</span></div><button class="send-btn" id="send-btn-${u.uid}" onclick="sendSharedPost('${u.uid||u.id}')">Send</button>`;
     l.appendChild(d);
   });
 };
@@ -2505,12 +2659,12 @@ window.sendSharedPost = async (tUid) => {
   const b=document.getElementById(`send-btn-${tUid}`);
   if(b){ b.innerText="Sent"; b.classList.add("sent"); b.disabled=true; }
   const cId=currentUser.uid<tUid?currentUser.uid+'_'+tUid:tUid+'_'+currentUser.uid;
-  await addDoc(collection(db,`chats/${cId}/messages`),{
-    sender:currentUser.uid,
-    postId:postToShare,
-    mediaType:shareMediaType,
-    timestamp:Date.now()
-  });
+  try{
+    await addDoc(collection(db,`chats/${cId}/messages`),{sender:currentUser.uid,postId:postToShare,mediaType:shareMediaType,timestamp:Date.now()});
+    const k='golpo_recent_chats_'+currentUser.uid;const recent=JSON.parse(localStorage.getItem(k)||'[]');if(!recent.includes(tUid))recent.unshift(tUid);localStorage.setItem(k,JSON.stringify(recent));
+    if(b){b.innerText='Sent';b.classList.add('sent');b.disabled=true;}
+    showToast('Shared successfully');
+  }catch(e){if(b){b.innerText='Send';b.disabled=false;}showToast('Could not share. Check your connection and permissions.');}
 };
 
 // ==========================================
@@ -2522,7 +2676,8 @@ window.renderMessagesList = () => {
   const l=document.getElementById('messages-user-list');
   l.innerHTML='';
   const q=(document.getElementById("messageSearch")?document.getElementById("messageSearch").value.toLowerCase():'');
-  let f=allUsers.filter(u=>u.uid!==currentUser.uid&&!isUserBlockedLocally(u.uid)&&!(u.blockedUsers||[]).includes(currentUser.uid));
+  const recentChatIds=JSON.parse(localStorage.getItem('golpo_recent_chats_'+(currentUser?.uid||''))||'[]');
+  let f=allUsers.filter(u=>u.uid!==currentUser.uid&&recentChatIds.includes(u.uid)&&!isUserBlockedLocally(u.uid)&&!(u.blockedUsers||[]).includes(currentUser.uid));
   if(q) f=f.filter(u=>(u.name||'').toLowerCase().includes(q));
   f.forEach(u=>{
     const d=document.createElement('div');
@@ -2539,6 +2694,7 @@ window.openChat = async (uid) => {
   if(!uid||uid===currentUser?.uid)return;
   if(await isBlockedEitherWay(uid)){showToast('Chat unavailable due to block settings.');return;}
   actChatU=uid;
+  try{const k='golpo_recent_chats_'+currentUser.uid;const recent=JSON.parse(localStorage.getItem(k)||'[]');if(!recent.includes(uid)){recent.unshift(uid);localStorage.setItem(k,JSON.stringify(recent));}}catch(e){}
   const u=allUsers.find(usr=>usr.uid===uid);
   document.getElementById('chat-user-name').innerText=u.name;
   document.getElementById('chat-user-avatar').src=u.avatar;
@@ -2549,7 +2705,7 @@ window.openChat = async (uid) => {
     const a=document.getElementById('chat-messages-area');
     a.innerHTML='';
     snap.forEach(doc=>{
-      const m=doc.data();
+      const m={id:doc.id,...doc.data()};
       const isMe=m.sender===currentUser.uid;
       const d=document.createElement('div');
       d.className=`chat-bubble ${isMe?'sent':'received'}`;
@@ -2566,12 +2722,18 @@ window.openChat = async (uid) => {
           d.innerHTML='<i>Media unavailable</i>';
         }
       }else{
-        d.innerText=m.text;
+        const msgText=document.createElement('div');msgText.textContent=m.text||'';d.appendChild(msgText);
       }
+      if(isMe){const del=document.createElement('button');del.type='button';del.textContent='Delete';del.style.cssText='display:block;margin-top:6px;border:0;background:transparent;color:#ef4444;font-size:11px;font-weight:700;cursor:pointer;';del.onclick=(ev)=>{ev.stopPropagation();window.deleteChatMessage(m.id,actChatU);};d.appendChild(del);}
       a.appendChild(d);
     });
     a.scrollTop=a.scrollHeight;
   });
+};
+
+window.deleteChatMessage=async(messageId,otherUid)=>{
+  if(!auth.currentUser||!messageId||!otherUid)return;
+  try{const cId=getChatId(auth.currentUser.uid,otherUid);const mRef=doc(db,`chats/${cId}/messages`,messageId);const snap=await getDoc(mRef);if(!snap.exists()||snap.data().sender!==auth.currentUser.uid){showToast('You can only delete your own messages.');return;}await deleteDoc(mRef);showToast('Message deleted');}catch(e){showToast('Could not delete message');}
 };
 
 window.sendChatMessage = async () => {
@@ -2581,6 +2743,7 @@ window.sendChatMessage = async () => {
   if(await isBlockedEitherWay(actChatU)){showToast('Message not sent: this user is blocked.');return;}
   const cId=getChatId(currentUser.uid,actChatU);
   await addDoc(collection(db,`chats/${cId}/messages`),{sender:currentUser.uid,text:t,timestamp:Date.now()});
+  try{const k='golpo_recent_chats_'+currentUser.uid;const recent=JSON.parse(localStorage.getItem(k)||'[]');if(!recent.includes(actChatU))recent.unshift(actChatU);localStorage.setItem(k,JSON.stringify(recent));}catch(e){}
   i.value='';
 };
 
@@ -2608,6 +2771,7 @@ window.startStoryViewer = (uid,isSelf) => {
 
 window.renderStoryMedia = () => {
   const s=actStArr[actStoryIdx];
+  if(!isAllowedImageRecord(s)){ window.nextStory(); return; }
   const u=allUsers.find(usr=>usr.uid===actStoryU)||{name:'User',avatar:''};
   document.getElementById('viewer-user-name').innerText=u.name;
   document.getElementById('viewer-user-avatar').src=u.avatar;
@@ -2616,11 +2780,8 @@ window.renderStoryMedia = () => {
     optimizedUrl=optimizedUrl.replace('/upload/','/upload/q_auto,f_auto/');
   }
   const mediaContainer=document.getElementById('story-media-container');
-  let videoMuted=s.musicUrl?'muted':'';
-  let storyAudioHtml=s.musicUrl?`<audio id="current-story-audio" src="${s.musicUrl}" autoplay></audio>`:'';
   mediaContainer.innerHTML=`
-    ${storyAudioHtml}
-    ${s.mediaUrl.match(/\.(mp4|webm|mov)$/i)?`<video id="current-story-video" src="${optimizedUrl}" autoplay playsinline ${videoMuted} style="max-width:100%;max-height:100vh;object-fit:contain;animation:storyFadeIn .3s ease-in-out;"></video>`:`<img id="current-story-img" src="${optimizedUrl}" style="animation:storyFadeIn .3s ease-in-out;">`}
+    <img id="current-story-img" src="${optimizedUrl}" alt="Story photo" style="max-width:100%;max-height:100vh;object-fit:contain;animation:storyFadeIn .3s ease-in-out;">
     <div class="tap-zone left"></div><div class="tap-zone right"></div>
   `;
   let lastTap=0;
@@ -3015,7 +3176,7 @@ window.switchProfileTab = async (tab) => {
   }
 };
 
-window.loadReels = async () => {
+window.loadReels = async (targetReelId = null) => {
   const container=document.getElementById('reels-feed-container');
   if(!container) return;
   if(window.allReelsGlobal.length===0){
@@ -3030,6 +3191,7 @@ window.loadReels = async () => {
   }
   container.innerHTML='';
   let shuffledReels=[...window.allReelsGlobal].sort(()=>Math.random()-0.5);
+  if(targetReelId){ const targetIndex=shuffledReels.findIndex(r=>r.id===targetReelId); if(targetIndex>0){ const [targetReel]=shuffledReels.splice(targetIndex,1); shuffledReels.unshift(targetReel); } }
   let currentlyRendered=0;
   const renderNextReel=async()=>{
     if(currentlyRendered>=shuffledReels.length) return;
@@ -3040,13 +3202,14 @@ window.loadReels = async () => {
     const u=uSnap.exists()?uSnap.data():{name:'User',avatar:'https://picsum.photos/100',followers:[]};
     const div=document.createElement('div');
     div.className='reel-item';
+    div.id='reel-item-'+reelId;
     const isLiked=reel.likes && auth.currentUser && reel.likes.includes(auth.currentUser.uid);
     const isFollowing=u.followers && auth.currentUser && u.followers.includes(auth.currentUser.uid);
     const isMyReel=auth.currentUser && reel.uid===auth.currentUser.uid;
     div.innerHTML=`
       <div class="reel-video-wrapper" style="position:relative;width:100%;height:100%;">
         <video class="reel-video" src="${reel.mediaUrl}" loop playsinline preload="metadata" ${window.isReelsMuted?'muted':''}></video>
-        <div class="reel-volume-indicator"><i class="fas fa-volume-mute"></i></div>
+        <div class="reel-volume-indicator"><i class="fas fa-volume-up"></i></div><button class="reel-sound-toggle" aria-label="Toggle sound" onclick="event.stopPropagation();window.toggleReelSound(this)" style="position:absolute;top:max(16px, env(safe-area-inset-top));right:14px;z-index:20;border:1px solid rgba(255,255,255,.45);border-radius:50%;width:42px;height:42px;background:rgba(0,0,0,.45);color:#fff;font-size:18px"><i class="fas fa-volume-up"></i></button>
         <div class="reel-overlay">
           <div class="reel-info">
             <div class="reel-user" onclick="event.stopPropagation();window.viewProfile('${reel.uid}');">
@@ -3102,6 +3265,7 @@ window.loadReels = async () => {
         h.innerHTML=`<svg viewBox="0 0 24 24" fill="#ef4444" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
         h.style.left=(e.clientX-r.left)+'px';
         h.style.top=(e.clientY-r.top)+'px';
+        h.style.position='absolute';
         vidWrap.appendChild(h);
         setTimeout(()=>h.remove(),600);
         if(!isCurrentlyLiked) window.toggleReelLike(reelId,likeBtn);
@@ -3125,9 +3289,10 @@ window.loadReels = async () => {
       if(entry.isIntersecting){
         if(v.paused){
           v.muted=window.isReelsMuted;
+          const soundBtn=entry.target.querySelector('.reel-sound-toggle'); if(soundBtn) soundBtn.innerHTML=window.isReelsMuted?'<i class="fas fa-volume-mute"></i>':'<i class="fas fa-volume-up"></i>';
           v.play().catch(()=>{
             v.muted=true;
-            window.isReelsMuted=true;
+            window.isReelsMuted=false;
             v.play().catch(()=>{});
           });
         }
@@ -3142,6 +3307,7 @@ window.loadReels = async () => {
   await renderNextReel();
   await renderNextReel();
   await renderNextReel();
+  if(targetReelId){ const targetEl=document.getElementById('reel-item-'+targetReelId); if(targetEl) targetEl.scrollIntoView({block:'start',behavior:'auto'}); }
 };
 
 window.reportReel = (reelId, ownerUid) => openReportModal('reel', reelId, ownerUid);
@@ -3157,6 +3323,14 @@ window.askDeleteReel = (reelId) => {
     }catch(e){ window.showToast("Failed to delete Reel."); }
     document.getElementById('global-loader').classList.add('hidden');
   });
+};
+
+window.toggleReelSound = (button) => {
+  window.isReelsMuted=!window.isReelsMuted;
+  document.querySelectorAll('.reel-video').forEach(v=>{v.muted=window.isReelsMuted;if(!window.isReelsMuted) v.play().catch(()=>{});});
+  document.querySelectorAll('.reel-sound-toggle').forEach(b=>b.innerHTML=window.isReelsMuted?'<i class="fas fa-volume-mute"></i>':'<i class="fas fa-volume-up"></i>');
+  const icon=window.isReelsMuted?'fa-volume-mute':'fa-volume-up';
+  const wrap=button.closest('.reel-video-wrapper');const indicator=wrap?.querySelector('.reel-volume-indicator');if(indicator){indicator.innerHTML=`<i class="fas ${icon}"></i>`;indicator.classList.add('show');setTimeout(()=>indicator.classList.remove('show'),800);}
 };
 
 window.toggleReelLike = (reelId,btnElement) => {
@@ -3211,13 +3385,19 @@ window.openReelComments = async (reelId) => {
       const u=uSnap.exists()?uSnap.data():{name:'User',avatar:'https://picsum.photos/100'};
       const d=document.createElement('div');
       d.style.cssText='display:flex;gap:12px;margin-bottom:16px;';
-      d.innerHTML=`<img src="${u.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
-        <div><div style="font-size:13px;"><strong>${u.name}</strong> <span>${c.text}</span></div></div>`;
+      d.innerHTML=`<img src="${u.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+        <div style="flex:1;min-width:0;"><div style="font-size:13px;overflow-wrap:anywhere;"><strong>${u.name}</strong> <span>${c.text}</span></div>${auth.currentUser&&c.uid===auth.currentUser.uid?`<button onclick="window.deleteOwnReelComment('${reelId}',${JSON.stringify(c.timestamp)})" style="margin-top:5px;border:0;background:transparent;color:#ef4444;font-weight:700;padding:3px 0;cursor:pointer;">Delete</button>`:''}</div>`;
       l.appendChild(d);
     }
   }else{
     l.innerHTML='<div style="text-align:center;padding:20px;color:#8892a6;">No comments yet.</div>';
   }
+};
+
+
+window.deleteOwnReelComment=async(reelId,timestamp)=>{
+  if(!auth.currentUser)return;
+  try{const ref=doc(db,'reels',reelId);const snap=await getDoc(ref);if(!snap.exists())return;const comments=snap.data().comments||[];const target=comments.find(c=>c.uid===auth.currentUser.uid&&c.timestamp===timestamp);if(!target)return;await updateDoc(ref,{comments:arrayRemove(target)});window.openReelComments(reelId);window.showToast('Comment deleted');}catch(e){window.showToast('Could not delete comment');}
 };
 
 window.postReelComment = async () => {
@@ -3254,11 +3434,116 @@ window.addEventListener('load',function(){
   }
 });
 </script>
-  <!-- ==========================================
-     GOLPO ULTRA-PREMIUM NATIVE WALLET SYSTEM 
-     (100% FULL-SCREEN, 3D UI, SMOOTH ANIMATIONS)
-     Place this just ABOVE the </body> tag.
-=========================================== -->
+<script id="image-only-safety">
+(function(){
+  function stopMedia(){
+    document.querySelectorAll('video,audio').forEach(function(m){
+      try { m.pause(); m.muted=true; m.removeAttribute('autoplay'); } catch(e) {}
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    stopMedia();
+    var input=document.getElementById('mediaFile');
+    if(input) input.setAttribute('accept','image/*');
+    document.querySelectorAll('[onclick]').forEach(function(el){
+      var action=el.getAttribute('onclick')||'';
+      var label=(el.textContent||'').toLowerCase();
+      if(action.includes("triggerFileSelect('story')") || action.includes('triggerReelSelect') || action.includes('openMusicModal') || label.includes('add music') || label.includes('upload reel') || label.includes('story (photo/video)')) el.style.display='none';
+    });
+  });
+  document.addEventListener('change', function(e){
+    var el=e.target;
+    if(!el || el.id!=='mediaFile' || !el.files || !el.files[0]) return;
+    if(!el.files[0].type || !el.files[0].type.startsWith('image/')){
+      el.value='';
+      if(typeof window.showToast==='function') window.showToast('শুধুমাত্র ছবি আপলোড করা যাবে।');
+      else alert('শুধুমাত্র ছবি আপলোড করা যাবে।');
+    }
+  });
+  document.addEventListener('play', function(e){
+    if(e.target && (e.target.tagName==='VIDEO' || e.target.tagName==='AUDIO')){
+      try { e.target.pause(); e.target.muted=true; } catch(err) {}
+    }
+  }, true);
+  document.addEventListener('visibilitychange', stopMedia);
+})();
+</script>
+
+
+<style id="strict-photo-only-cleanup">
+  video, audio, #reels-page, #reels-feed-container, #profile-reels, #tab-reels,
+  .audio-toggle-btn, .reel-sound-toggle, .music-item, .music-modal-content,
+  .selected-music-badge, #music-modal, #premium-earning-widget, #ultra-wallet-page,
+  #withdraw-kyc-modal, #withdraw-success-modal, #btn-wallet-injected,
+  #wallet-page, .wallet-button, [data-action="wallet"], [data-page="reels"] { display:none !important; visibility:hidden !important; }
+</style>
+<script id="strict-photo-only-cleanup-js">
+(function(){
+  const blocked=/\.(mp4|m4v|webm|mov|avi|mkv|m3u8|mp3|m4a|aac|wav|ogg|oga|opus|flac|wma)(?:[?#].*)?$/i;
+  function badUrl(url){
+    if(!url || typeof url!=='string') return true;
+    const u=url.trim().toLowerCase();
+    return blocked.test(u) || u.includes('/video/upload/') || u.startsWith('blob:');
+  }
+  function stopAndRemoveMedia(root=document){
+    root.querySelectorAll('video,audio').forEach(el=>{try{el.pause();el.removeAttribute('src');el.querySelectorAll('source').forEach(x=>x.remove());el.remove();}catch(e){el.remove();}});
+    root.querySelectorAll('.post-card,.grid-item,.chat-shared-post').forEach(card=>{
+      const img=card.querySelector('img');
+      const media=card.querySelector('[src]');
+      if(media && media.tagName!=='IMG' || (img && badUrl(img.getAttribute('src')))) card.remove();
+      card.querySelectorAll('.audio-toggle-btn,.reel-sound-toggle,[id^="post-audio-"],[id^="audio-btn-"]').forEach(el=>el.remove());
+      card.querySelectorAll('[class*="music"],marquee').forEach(el=>el.remove());
+    });
+    root.querySelectorAll('#premium-earning-widget,#btn-wallet-injected').forEach(el=>el.remove());
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    stopAndRemoveMedia();
+    const input=document.getElementById('mediaFile'); if(input) input.setAttribute('accept','image/*');
+    document.querySelectorAll('[onclick]').forEach(el=>{
+      const a=(el.getAttribute('onclick')||'').toLowerCase(), t=(el.textContent||'').toLowerCase();
+      if(a.includes('openmusicmodal')||a.includes('triggerreelselect')||a.includes('openultrawallet')||t.includes('add music')||t.includes('upload reel')||t.includes('my wallet')||t.includes('golpo wallet')) el.remove();
+    });
+  });
+  const observer=new MutationObserver(()=>stopAndRemoveMedia());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('play',e=>{if(e.target && /^(VIDEO|AUDIO)$/.test(e.target.tagName)){try{e.target.pause();}catch(_){} e.target.remove();}},true);
+  document.addEventListener('change',e=>{
+    if(e.target && e.target.id==='mediaFile' && e.target.files && e.target.files[0] && !e.target.files[0].type.startsWith('image/')){
+      e.target.value=''; if(window.showToast) window.showToast('শুধুমাত্র ছবি আপলোড করা যাবে।');
+    }
+  });
+  try{profileObserver.disconnect();}catch(e){}
+  window.openMusicModal=()=>{}; window.filterMusic=()=>{}; window.selectMusic=()=>{};
+  window.handleLocalAudioUpload=()=>{}; window.togglePostAudio=()=>{}; window.togglePvAudio=()=>{};
+  window.resumeAllAudio=()=>{}; window.toggleHomeReelSound=()=>{};
+  window.openUltraWallet=()=>{}; window.closeUltraWallet=()=>{};
+  window.addGolpoCoins=async()=>{};
+  window.triggerReelSelect=()=>{if(window.showToast)window.showToast('ভিডিও/রিল আপলোড বন্ধ করা হয়েছে।');};
+})();
+</script>
+
+
+<!-- FINAL FIX: remove the floating shiny coin/activity-collect button from the home screen -->
+<style id="remove-floating-coin-widget-final">
+  #premium-earning-widget, #premium-pot-ring, #premium-pot-timer, .widget-icon, .widget-pct {
+    display: none !important; visibility: hidden !important; opacity: 0 !important;
+    pointer-events: none !important; width: 0 !important; height: 0 !important;
+  }
+</style>
+<script>
+(function removeFloatingCoinCollectButton(){
+  function removeCoinWidget(){
+    document.querySelectorAll('#premium-earning-widget, [id="premium-earning-widget"], [onclick*="openUltraWallet"]')
+      .forEach(function(el){
+        if(el.id === 'premium-earning-widget' || (el.querySelector && el.querySelector('#premium-pot-timer'))) el.remove();
+      });
+  }
+  removeCoinWidget();
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', removeCoinWidget);
+  var coinObserver = new MutationObserver(removeCoinWidget);
+  coinObserver.observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
 <style>
 /* 1. Global Toast Fix */
 #toast-container { z-index: 9999999999 !important; }
@@ -3344,6 +3629,28 @@ window.addEventListener('load',function(){
         <i class="fa-solid fa-sack-dollar widget-icon"></i>
         <span class="widget-pct" id="premium-pot-timer">0%</span>
     </div>
+</div>
+
+<!-- KYC / withdrawal request modal -->
+<div id="withdraw-kyc-modal" class="modal-overlay center hidden" style="z-index:2147482000;">
+  <div class="modal-content" style="border-radius:24px;max-width:390px;text-align:left;">
+    <div class="modal-title"><i class="fa-solid fa-shield-halved" style="color:#667eea;"></i> Verify to Withdraw</div>
+    <p style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.5;">Enter your details so our team can review your withdrawal request.</p>
+    <form id="withdraw-kyc-form">
+      <div class="edit-field"><label for="withdraw-fullname">Full name</label><input id="withdraw-fullname" name="fullname" autocomplete="name" required maxlength="100" placeholder="Enter your full name"></div>
+      <div class="edit-field"><label for="withdraw-phone">Phone number</label><input id="withdraw-phone" name="phone" type="tel" autocomplete="tel" required maxlength="20" placeholder="Your phone number"></div>
+      <div class="edit-field"><label for="withdraw-whatsapp">WhatsApp number</label><input id="withdraw-whatsapp" name="whatsapp" type="tel" required maxlength="20" placeholder="Your WhatsApp number"></div>
+      <button class="publish-btn" type="submit">Submit KYC & Request</button>
+      <button class="action-btn" type="button" style="width:100%;margin-top:10px;" onclick="document.getElementById('withdraw-kyc-modal').classList.add('hidden')">Cancel</button>
+    </form>
+  </div>
+</div>
+<div id="withdraw-success-modal" class="modal-overlay center hidden" style="z-index:2147482500;">
+  <div class="modal-content" style="border-radius:24px;max-width:340px;padding:30px 24px;">
+    <div style="width:66px;height:66px;border-radius:50%;background:#ecfdf5;color:#059669;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;"><i class="fa-solid fa-check"></i></div>
+    <h3 style="font-size:18px;margin-bottom:10px;color:#0f172a;">Request Submitted</h3>
+    <p style="font-size:13px;line-height:1.7;color:#64748b;">Your withdrawal request has been received. Our team will contact you within 24 hours and process your payment after review.</p>
+  </div>
 </div>
 
 <!-- 100% FULL-SCREEN NATIVE WALLET PAGE -->
@@ -3432,7 +3739,7 @@ window.addEventListener('load',function(){
                     <i class="fa-solid fa-building-columns"></i>
                     <div>
                         <h5>KYC & Withdrawal</h5>
-                        <p>Real-money withdrawals require mandatory identity verification. The minimum withdrawal limit is 5,000 Coins.</p>
+                        <p>Real-money withdrawals require mandatory identity verification. The minimum withdrawal limit is 5,000 Coins (₹50). One withdrawal can remain pending at a time.</p>
                     </div>
                 </div>
                 <div class="uw-policy-item">
@@ -3449,7 +3756,7 @@ window.addEventListener('load',function(){
     <!-- Fixed Bottom Action (Only visible on Dashboard) -->
     <div class="uw-bottom-action" id="uw-withdraw-box">
         <button class="btn-ultra-withdraw" onclick="window.requestWithdraw()">
-            Withdraw to Bank <i class="fa-solid fa-arrow-right"></i>
+            Verify to Withdraw <i class="fa-solid fa-arrow-right"></i>
         </button>
     </div>
 
@@ -3466,7 +3773,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 const db = getFirestore();
 const auth = getAuth();
 
-const CFG = { DAILY_LIMIT: 10000, POT_REWARD: 50, STORY_REWARD: 10, LOGIN_REWARD: 10, POT_SEC: 300 };
+const CFG = { DAILY_LIMIT: 10000, POT_REWARD: 50, STORY_REWARD: 10, LOGIN_REWARD: 10, POT_SEC: 60 };
 let uState = { wallet: 0, daily: 0, lastDate: '' };
 let potProgress = 0, lastActive = Date.now(), potInterval = null;
 
@@ -3540,39 +3847,65 @@ window.addGolpoCoins = async (amount, reason) => {
     } catch (e) { console.error(e); }
 };
 
-// WITHDRAWAL SYSTEM
+// WITHDRAWAL SYSTEM — KYC, one active request, pending balance deduction
 window.requestWithdraw = async () => {
     const user = auth.currentUser;
     if (!user) return;
-
     if (uState.wallet < 5000) {
-        window.showToast("⚠️ Minimum 5,000 Coins required to withdraw!");
+        window.showToast("Minimum withdrawal is 5,000 Coins (₹50). ");
         return;
     }
-
-    const requestAmount = uState.wallet;
-    const inrValue = (requestAmount / 100).toFixed(2);
-
     try {
-        await addDoc(collection(db, "withdraw_requests"), {
-            uid: user.uid,
-            amountCoins: requestAmount,
-            amountINR: inrValue,
-            status: 'Pending',
-            timestamp: Date.now()
-        });
-
-        uState.wallet = 0;
-        await updateDoc(doc(db, "users", user.uid), { walletBalance: 0 });
-        logTransaction("Withdrawal Request", requestAmount, 'spend');
-
-        window.updatePremiumWalletUI();
-        window.showToast("✅ Request sent to Admin successfully!");
-        window.switchUwTab('history');
-    } catch (error) {
-        window.showToast("❌ Failed to process request.");
+        const activeQ = query(collection(db, "withdraw_requests"), where("uid", "==", user.uid), where("status", "in", ["Pending", "In Progress"]));
+        const activeSnap = await getDocs(activeQ);
+        if (!activeSnap.empty) {
+            window.showToast("You already have a withdrawal pending review.");
+            return;
+        }
+        document.getElementById('withdraw-kyc-modal').classList.remove('hidden');
+    } catch (e) {
+        console.error(e);
+        window.showToast("Could not check withdrawal status. Please try again.");
     }
 };
+
+document.getElementById('withdraw-kyc-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const user = auth.currentUser;
+    if (!user) return;
+    const fullName = document.getElementById('withdraw-fullname').value.trim();
+    const phone = document.getElementById('withdraw-phone').value.trim();
+    const whatsapp = document.getElementById('withdraw-whatsapp').value.trim();
+    if (!fullName || !phone || !whatsapp) return window.showToast('Please complete all KYC fields.');
+    const submitBtn = event.currentTarget.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    const requestAmount = uState.wallet;
+    const inrValue = (requestAmount / 100).toFixed(2);
+    try {
+        const activeQ = query(collection(db, "withdraw_requests"), where("uid", "==", user.uid), where("status", "in", ["Pending", "In Progress"]));
+        const activeSnap = await getDocs(activeQ);
+        if (!activeSnap.empty) throw new Error('ACTIVE_REQUEST');
+        const txRef = await addDoc(collection(db, `users/${user.uid}/transactions`), {
+            title: "Withdrawal Request", amount: requestAmount, type: 'spend', status: 'Pending', timestamp: Date.now()
+        });
+        const reqRef = await addDoc(collection(db, "withdraw_requests"), {
+            uid: user.uid, fullName, phone, whatsapp, amountCoins: requestAmount,
+            amountINR: inrValue, status: 'Pending', transactionId: txRef.id, timestamp: Date.now()
+        });
+        uState.wallet = Math.max(0, uState.wallet - requestAmount);
+        await updateDoc(doc(db, "users", user.uid), { walletBalance: uState.wallet });
+        document.getElementById('withdraw-kyc-modal').classList.add('hidden');
+        document.getElementById('withdraw-success-modal').classList.remove('hidden');
+        document.getElementById('withdraw-kyc-form').reset();
+        window.updatePremiumWalletUI();
+        window.switchUwTab('history');
+        setTimeout(() => document.getElementById('withdraw-success-modal').classList.add('hidden'), 3000);
+        window.showToast('Withdrawal request sent to Admin.');
+    } catch (error) {
+        console.error(error);
+        window.showToast(error.message === 'ACTIVE_REQUEST' ? 'A withdrawal is already pending.' : 'Failed to submit request. Please try again.');
+    } finally { submitBtn.disabled = false; }
+});
 
 // LOAD HISTORY (Premium UI)
 window.loadHistory = async () => {
@@ -3594,6 +3927,8 @@ window.loadHistory = async () => {
         snap.forEach(docSnap => {
             const data = docSnap.data();
             const isEarn = data.type === 'earn';
+            const statusText = data.status || '';
+            const statusColor = statusText === 'Verified' ? '#059669' : (statusText === 'Rejected' ? '#dc2626' : '#d97706');
             const dateStr = new Date(data.timestamp).toLocaleString();
             container.innerHTML += `
                 <div class="uw-history-item">
@@ -3604,6 +3939,7 @@ window.loadHistory = async () => {
                         <div>
                             <div class="uw-h-title">${data.title}</div>
                             <div class="uw-h-date">${dateStr}</div>
+                            ${statusText ? `<div style="font-size:11px;font-weight:700;color:${statusColor};margin-top:4px;">${statusText === 'Verified' ? '✓ Paid / Verified' : statusText === 'Rejected' ? '✕ Rejected (refunded)' : '● Pending / In Progress'}</div>` : ''}
                         </div>
                     </div>
                     <div class="uw-h-amt ${isEarn ? 'earn' : 'spend'}">
@@ -3661,23 +3997,8 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// CHAIN CODE: Profile Button Injection
-const profileObserver = new MutationObserver(() => {
-    const actionContainer = document.getElementById('profile-action-container');
-    const editBtn = document.getElementById('edit-avatar-btn');
-    if (actionContainer && editBtn && editBtn.style.display !== 'none' && !document.getElementById('btn-wallet-injected')) {
-        const walletBtn = document.createElement('button');
-        walletBtn.id = 'btn-wallet-injected';
-        walletBtn.className = 'action-btn';
-        walletBtn.style.background = 'linear-gradient(135deg, #0f172a, #334155)';
-        walletBtn.style.color = '#fff';
-        walletBtn.style.border = 'none';
-        walletBtn.innerHTML = '<i class="fa-solid fa-wallet"></i> My Wallet';
-        walletBtn.onclick = window.openUltraWallet;
-        actionContainer.insertBefore(walletBtn, actionContainer.firstChild);
-    }
-});
-profileObserver.observe(document.body, { childList: true, subtree: true });
+// Profile wallet-button injection removed in photo-only build.
+
 
 // CHAIN CODE: Hook Publish for Story Rewards
 if (window.publishMedia) {
@@ -3732,52 +4053,98 @@ adminObserver.observe(document.body, { childList: true, subtree: true });
 
 window.loadAdminWithdrawals = async () => {
     const container = document.getElementById('admin-withdrawals-list');
+    if (!container) return;
     container.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
-    
     try {
         const q = query(collection(db, "withdraw_requests"), orderBy("timestamp", "desc"));
         const snap = await getDocs(q);
         container.innerHTML = '';
-        
         if (snap.empty) {
-            container.innerHTML = '<p style="text-align:center; color:#8892a6; padding:20px;">No pending requests.</p>';
+            container.innerHTML = '<p style="text-align:center;color:#8892a6;padding:20px;">No withdrawal requests.</p>';
             return;
         }
-        
-        snap.forEach(async (docSnap) => {
+        for (const docSnap of snap.docs) {
             const data = docSnap.data();
             const dateStr = new Date(data.timestamp).toLocaleString();
-            
-            const uSnap = await getDoc(doc(db, "users", data.uid));
-            const uName = uSnap.exists() ? uSnap.data().name : "Unknown User";
-            const uAvatar = uSnap.exists() ? uSnap.data().avatar : "https://picsum.photos/100";
-
-            container.innerHTML += `
-                <div style="background:#fff; border-radius:14px; padding:16px; border:1px solid #eef2f7; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                    <div style="display:flex; gap:12px; align-items:center;">
-                        <img src="${uAvatar}" style="width:44px; height:44px; border-radius:50%; object-fit:cover;">
-                        <div>
-                            <div style="font-weight:800; font-size:14px; color:#0f172a;">${uName}</div>
-                            <div style="font-size:12px; color:#64748b; font-weight:600;">Req: ${data.amountCoins} 🪙 (₹${data.amountINR})</div>
-                            <div style="font-size:10px; color:#10b981; margin-top:2px;">${dateStr}</div>
-                        </div>
-                    </div>
-                    <button class="action-btn" style="background:#0f172a; color:#fff; border:none; padding:10px 14px;" onclick="window.showToast('Contact User for KYC.')">
-                        Verify
-                    </button>
-                </div>
-            `;
-        });
+            const status = data.status || 'Pending';
+            const card = document.createElement('div');
+            card.style.cssText = 'background:#fff;border-radius:14px;padding:16px;border:1px solid #eef2f7;margin-bottom:12px;';
+            const safe = v => String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            card.innerHTML = `<div style="font-weight:800;font-size:15px;color:#0f172a;">${safe(data.fullName || 'Unknown User')}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:5px;">Phone: ${safe(data.phone)} · WhatsApp: ${safe(data.whatsapp)}</div>
+              <div style="font-size:13px;font-weight:700;color:#334155;margin-top:8px;">${safe(data.amountCoins)} Coins · ₹${safe(data.amountINR)}</div>
+              <div style="font-size:11px;color:#64748b;margin-top:4px;">${safe(dateStr)}</div>
+              <div style="font-size:12px;font-weight:800;margin-top:8px;color:${status === 'Verified' ? '#059669' : status === 'Rejected' ? '#dc2626' : '#d97706'};">Status: ${safe(status)}</div>
+              <div style="display:flex;gap:8px;margin-top:12px;"></div>`;
+            const actions = card.querySelector('div[style*="display:flex"]');
+            if (status === 'Pending' || status === 'In Progress') {
+                const verify = document.createElement('button');
+                verify.className = 'action-btn'; verify.style.cssText = 'flex:1;background:#059669;color:white;border:0;'; verify.textContent = 'Verify / Mark Paid';
+                verify.onclick = () => window.resolveWithdrawal(docSnap.id, data, 'Verified');
+                const reject = document.createElement('button');
+                reject.className = 'action-btn'; reject.style.cssText = 'flex:1;background:#dc2626;color:white;border:0;'; reject.textContent = 'Reject & Refund';
+                reject.onclick = () => window.resolveWithdrawal(docSnap.id, data, 'Rejected');
+                actions.append(verify, reject);
+            }
+            container.appendChild(card);
+        }
     } catch (e) {
-        container.innerHTML = '<p style="text-align:center; color:#ef4444;">Failed to load requests.</p>';
+        console.error(e);
+        container.innerHTML = '<p style="text-align:center;color:#ef4444;">Failed to load withdrawal requests.</p>';
+    }
+};
+
+window.resolveWithdrawal = async (requestId, data, newStatus) => {
+    try {
+        const requestRef = doc(db, 'withdraw_requests', requestId);
+        const fresh = await getDoc(requestRef);
+        if (!fresh.exists() || !['Pending','In Progress'].includes(fresh.data().status || 'Pending')) {
+            window.showToast('This request has already been processed.');
+            return window.loadAdminWithdrawals();
+        }
+        await updateDoc(requestRef, { status: newStatus, resolvedAt: Date.now() });
+        const txId = data.transactionId;
+        if (txId) await updateDoc(doc(db, `users/${data.uid}/transactions`, txId), { status: newStatus });
+        if (newStatus === 'Rejected') {
+            const userRef = doc(db, 'users', data.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                const balance = Number(userSnap.data().walletBalance || 0) + Number(data.amountCoins || 0);
+                await updateDoc(userRef, { walletBalance: balance });
+                await addDoc(collection(db, `users/${data.uid}/transactions`), {
+                    title: 'Withdrawal Refund', amount: Number(data.amountCoins || 0), type: 'earn', status: 'Rejected', timestamp: Date.now()
+                });
+            }
+        }
+        window.showToast(newStatus === 'Verified' ? 'Withdrawal marked as paid.' : 'Request rejected and balance refunded.');
+        window.loadAdminWithdrawals();
+    } catch (e) {
+        console.error(e);
+        window.showToast('Could not update withdrawal status.');
     }
 };
 </script>
-<!-- ==========================================
-     GOLPO ULTIMATE VERIFICATION SYSTEM 
-     (BOTTOM-SHEET, MENU BUTTON, ADMIN & REWARDS)
-     Place this just ABOVE the </body> tag.
-=========================================== -->
+<!-- FINAL FIX: remove the floating shiny coin/activity-collect button from the home screen -->
+<style id="remove-floating-coin-widget-final">
+  #premium-earning-widget, #premium-pot-ring, #premium-pot-timer, .widget-icon, .widget-pct {
+    display: none !important; visibility: hidden !important; opacity: 0 !important;
+    pointer-events: none !important; width: 0 !important; height: 0 !important;
+  }
+</style>
+<script>
+(function removeFloatingCoinCollectButton(){
+  function removeCoinWidget(){
+    document.querySelectorAll('#premium-earning-widget, [id="premium-earning-widget"], [onclick*="openUltraWallet"]')
+      .forEach(function(el){
+        if(el.id === 'premium-earning-widget' || (el.querySelector && el.querySelector('#premium-pot-timer'))) el.remove();
+      });
+  }
+  removeCoinWidget();
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', removeCoinWidget);
+  var coinObserver = new MutationObserver(removeCoinWidget);
+  coinObserver.observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
 <style>
 /* Badges */
 .ver-badge { display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; border-radius: 50%; font-size: 8px; margin-left: 5px; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
@@ -4171,7 +4538,32 @@ window.rejectVerification = async (reqId) => {
     } catch (e) { window.showToast("❌ Error rejecting."); }
     document.getElementById('global-loader').classList.add('hidden');
 };
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Offline cache worker not available:',err)));
+}
 </script>
 
+
+<!-- FINAL FIX: remove the floating shiny coin/activity-collect button from the home screen -->
+<style id="remove-floating-coin-widget-final">
+  #premium-earning-widget, #premium-pot-ring, #premium-pot-timer, .widget-icon, .widget-pct {
+    display: none !important; visibility: hidden !important; opacity: 0 !important;
+    pointer-events: none !important; width: 0 !important; height: 0 !important;
+  }
+</style>
+<script>
+(function removeFloatingCoinCollectButton(){
+  function removeCoinWidget(){
+    document.querySelectorAll('#premium-earning-widget, [id="premium-earning-widget"], [onclick*="openUltraWallet"]')
+      .forEach(function(el){
+        if(el.id === 'premium-earning-widget' || (el.querySelector && el.querySelector('#premium-pot-timer'))) el.remove();
+      });
+  }
+  removeCoinWidget();
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', removeCoinWidget);
+  var coinObserver = new MutationObserver(removeCoinWidget);
+  coinObserver.observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
 </body>
 </html>
